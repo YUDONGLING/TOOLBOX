@@ -1,0 +1,40 @@
+name: Actions
+
+on:
+  push:
+    branches:
+      - master
+  # schedule:
+  #     - cron:  * * * * *
+  workflow_dispatch:
+
+env:
+  # TimeZone
+  # Eg. "Asia/Shanghai"
+  TZ: Asia/Shanghai
+  # Set in the SECRETs
+  # A Github Access Token with Read/Write Permission to REPOs
+  # Eg. "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  GHTKs: ${{ secrets.GHTKS }}
+  # Set in the VARIABLEs
+  # A REPO List which depend on this REPO, Separated by Comma
+  # Eg. "USERNAME/REPO-A, USERNAME/REPO-B"
+  REPOs: ${{ vars.REPOS }}
+
+jobs:
+  Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Working
+        run: |
+          IFS=", " read -ra RepoList <<< "${{ env.REPOs }}"
+          for Repo in "${RepoList[@]}"; do
+            echo "Updating '${Repo}'" || exit 0
+            git clone "https://${{ env.GHTKs }}@github.com/${Repo}.git" || exit 0
+            cd "$(echo "$Repo" | awk -F '/' '{print $2}')" || exit 0
+            git submodule update --init --remote || exit 0
+            git config user.name "GitHub Action" || exit 0
+            git config user.email "ACTION@GITHUB.COM" || exit 0
+            git commit -am "chore(deps): Update dependent submodule(s) to latest" || exit 0
+            git push || exit 0
+          done
