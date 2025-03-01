@@ -1,6 +1,14 @@
 <?php
 
 /**
+ * Call a Function Asynchronously.
+ * Return an `Concurrent.Future` Object, with Customized Method `waitResult()` to Close the ThreadPoolExecutor and Return the Result.
+ */
+function AsyncCall(callable $Function, ...$Args): object {
+    throw new Exception("Not Implemented");
+}
+
+/**
  * Merge two Dictionaries Recursively.
  */
 function MergeDictionaries(array $Base, array $Override): array {
