@@ -1,3 +1,25 @@
+def _FindIp(Headers: dict, NameList: list, FallbackIp: str = '0.0.0.0') -> str:
+    for _ in NameList:
+        if _ in Headers:
+            _Ip = Headers[_].split(',')[0].strip() != ''
+            if _Ip: return _Ip
+    return FallbackIp
+
+
+def _ConvertSnakeCase(Body: dict) -> dict:
+    def SnakeCase(Dict):
+        _Dict = {}
+        for _Key, _Value in Dict.items():
+            _Key = ''.join(['_' + _.lower() if (_.isupper() and (_Index == 0 or not _Key[_Index - 1].isupper())) else _.lower() for _Index, _ in enumerate(_Key)]).lstrip('_')
+            if isinstance(_Value, dict):
+                _Dict[_Key] = _Value if _Value.get('*Ignore', False) else SnakeCase(_Value); continue
+            if isinstance(_Value, list):
+                _Dict[_Key] = [SnakeCase(_) if isinstance(_, dict) else _ for _ in _Value] ; continue
+            _Dict[_Key] = _Value
+        return _Dict
+    return SnakeCase(Body)
+
+
 async def _CallLog(Wsgi: object, Bucket: str = None, Region: str = None) -> None:
     import json
     import time
