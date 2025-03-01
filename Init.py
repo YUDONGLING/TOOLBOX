@@ -1,3 +1,25 @@
+def AsyncCall(Function: callable, *Args, **Kwargs) -> object:
+    '''
+    Call a Function Asynchronously. \n
+    Return an `Concurrent.Future` Object, with Customized Method `waitResult()` to Close the ThreadPoolExecutor and Return the Result.
+    '''
+    import concurrent.futures
+
+    Thread = concurrent.futures.ThreadPoolExecutor()
+    Future = Thread.submit(Function, *Args, **Kwargs)
+    Future.__ThreadPoolExecutor = Thread
+
+    def waitResult():
+        try:
+            Result = Future.result()
+        finally:
+            Future.__ThreadPoolExecutor.shutdown()
+        return Result
+
+    Future.waitResult = waitResult
+    return Future
+
+
 def MergeDictionaries(Base: dict, Override: dict) -> dict:
     '''
     Merge two Dictionaries Recursively.
