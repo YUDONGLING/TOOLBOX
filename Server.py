@@ -548,3 +548,83 @@ class FlaskWsgi(object):
 
     async def CallWebhook(self, Token: str, Topic: str = None):
         return _CallWebhook(self, Token, Topic)
+
+
+class FlowControl(object):
+    '''
+    API Flow Control. \n
+    Limit the Number of Requests in a Period of Time with a Specific Feature.
+    '''
+    def __init__(self, TTL: int, Quota: int, Feature: str | list, Options: dict = None):
+        import os
+        import time
+
+        if not __package__:
+              from  Init import MergeDictionaries; from  UUID import HashUUID
+        else: from .Init import MergeDictionaries; from .UUID import HashUUID
+
+        self._TTL     = self.TTL   = TTL
+        self._Quota   = self.Quota = Quota
+        self._Feature = Feature if isinstance(Feature, list) else [Feature]; self._Feature = [str(_) for _ in sorted(self._Feature)]
+
+        DftOpts = {
+            'Folder'    : 'FlowCtrl',
+            'Prefix.+'  : 'P',
+            'Prefix.-'  : 'M'
+        }
+        self._Options = MergeDictionaries(DftOpts, Options)
+
+        try:
+            os.makedirs(self._Options['Folder'], exist_ok = True)
+        except Exception as Error:
+            self._Options['Folder']   = self._Options['Folder'].replace('/', '-').replace('\\', '-')
+            self._Options['Prefix.+'] = '%s_%s' % (self._Options['Folder'], self._Options['Prefix.+'])
+            self._Options['Prefix.-'] = '%s_%s' % (self._Options['Folder'], self._Options['Prefix.-'])
+            self._Options['Folder']   = ''
+
+        self._HashKey     = '%s_%s_' % (int(time.time() // self._TTL), HashUUID('_'.join(self._Feature)))
+        self._Plus_Prefix = '%s_%s'  % (self._Options['Prefix.+'], self._HashKey)
+        self._Minu_Prefix = '%s_%s'  % (self._Options['Prefix.-'], self._HashKey)
+
+    def __iadd__(self, Count: int) -> object:
+        for _ in range(Count): self.__MakeFile(self._Plus_Prefix)
+        return self
+    
+    def __isub__(self, Count: int) -> object:
+        for _ in range(min(Count, self.Count)): self.__MakeFile(self._Minu_Prefix)
+        return self
+
+    def __MakeFile(self, Prefix):
+        import os
+        import uuid
+        try:
+            with open(os.path.join(self._Options['Folder'], '%s%s' % (Prefix, uuid.uuid4())), 'w') as File: File.write('')
+        except Exception as Error: pass
+
+    def __CountFile(self, Prefix):
+        import os
+        try:
+            return len([File for File in os.listdir(self._Options['Folder']) if File.startswith(Prefix)])
+        except Exception as Error: return 0
+
+    @property
+    def OK(self) -> bool:
+        '''
+        Get the Status of the Flow Control.
+        '''
+        return self.Count <= self._Quota
+
+    @property
+    def Count(self) -> int:
+        return self.__CountFile(self._Plus_Prefix) - self.__CountFile(self._Minu_Prefix)
+
+    @property
+    def RetryAfter(self) -> int:
+        import time
+        return 0 if self.OK else int((time.time() // self._TTL + 1) * self._TTL - time.time())
+
+    def Reset(self):
+        '''
+        Reset the Flow Control.
+        '''
+        self = self.__isub__(self.Count)
