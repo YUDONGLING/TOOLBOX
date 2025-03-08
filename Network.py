@@ -22,7 +22,7 @@ def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | dict
 
     try:
         Type = {
-            'A' :  1, 'NS' : 2 , 'CNAME':  5, 'SOA': 6 , 'PTR':  12,
+            'A' :  1, 'NS' :  2, 'CNAME':  5, 'SOA':  6, 'PTR':  12,
             'MX': 15, 'TXT': 16, 'AAAA' : 28, 'SRV': 33, 'ANY': 255
         }[Type.upper()]
 
@@ -123,6 +123,7 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
         Location[3] = re.sub(r'(管理区管委会|行政委员会|风景名胜区|林区|市|县|区)$', '', Location[3]) if len(Location[3]) > 2 and not re.search(r'(管理区|回族区|聚集区|开发区|示范区|食品区|实验区|自治县|矿区|新区|园区|族区)$', Location[3]) else Location[3]
 
         # 网络 Network Provider
+        if any([_ in Location[5].upper() for _ in ['CABLE'  , 'BROADCAST', '广电']]): Location[5] = '广电'
         if any([_ in Location[5].upper() for _ in ['TELECOM', 'CHINANET' , '电信']]): Location[5] = '电信'
         if any([_ in Location[5].upper() for _ in ['UNICOM' , 'CHINA169' , '联通']]): Location[5] = '联通'
         if any([_ in Location[5].upper() for _ in ['MOBILE' , 'CMNET'    , '移动']]): Location[5] = '移动'
@@ -211,7 +212,7 @@ def __QueryIpLocation_Ipa(Ip: str, Options: dict) -> list:
     import requests
 
     try:
-        Url = base64.b64decode('LWh0dHBzOi8vZGVtby5pcC1hcGkuY29tL2pzb24v'.encode()).decode()[1:] + Ip + base64.b64decode('LT9maWVsZHM9Y291bnRyeSxyZWdpb25OYW1lLGNpdHksaXNwLGFzJmxhbmc9emgtQ04='.encode()).decode()[1:]
+        Url = base64.b64decode('LWh0dHBzOi8vZGVtby5pcC1hcGkuY29tL2pzb24v'.encode()).decode()[1:] + Ip + base64.b64decode('LT9maWVsZHM9Y291bnRyeSxyZWdpb25OYW1lLGNpdHksaXNwLGFzLG9yZyZsYW5nPXpoLUNO'.encode()).decode()[1:]
         Hed = {
             'Accept'         : '*/*',
             'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -228,7 +229,7 @@ def __QueryIpLocation_Ipa(Ip: str, Options: dict) -> list:
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()
 
-        return [Rsp['country'], Rsp['regionName'], Rsp['city'], '', '', Rsp['isp'] + Rsp['as'] if Rsp['country'] == '中国' else Rsp['isp']]
+        return [Rsp['country'], Rsp['regionName'], Rsp['city'], '', '', Rsp['isp'] + Rsp['as'] + Rsp['org'] if Rsp['country'] == '中国' else Rsp['isp']]
     except Exception as Error:
         return [''] * 6
 
