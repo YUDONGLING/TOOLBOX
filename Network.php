@@ -154,11 +154,13 @@ function QueryIpLocation(string $Ip, array $Options = null): string {
         $Location[3] = (strlen($Location[3]) > 2 && !preg_match('/(管理区|回族区|聚集区|开发区|示范区|食品区|实验区|自治县|矿区|新区|园区|族区)$/', $Location[3])) ? preg_replace('/(管理区管委会|行政委员会|风景名胜区|林区|市|县|区)$/', '', $Location[3]) : $Location[3];
 
         // 网络 Network Provider
-        if (strpos($Location[5], '电信') !== false || strpos($Location[5], 'TELECOM') !== false || strpos($Location[5], 'CHINANET' ) !== false) $Location[5] = '电信';
-        if (strpos($Location[5], '联通') !== false || strpos($Location[5], 'UNICOM' ) !== false || strpos($Location[5], 'CHINA169' ) !== false) $Location[5] = '联通';
-        if (strpos($Location[5], '移动') !== false || strpos($Location[5], 'MOBILE' ) !== false || strpos($Location[5], 'CMNET'    ) !== false) $Location[5] = '移动';
-        if (strpos($Location[5], '铁通') !== false || strpos($Location[5], 'TIETONG') !== false || strpos($Location[5], 'RAILWAT'  ) !== false) $Location[5] = '铁通';
-        if (strpos($Location[5], '教育') !== false || strpos($Location[5], 'CERNET' ) !== false || strpos($Location[5], 'EDUCATION') !== false) $Location[5] = '教育网';
+        $___Provider = strtoupper($Location[5]);
+        if (strpos($___Provider, '广电') !== false || strpos($___Provider, 'CABLE'  ) !== false || strpos($___Provider, 'BROADCAST') !== false) $Location[5] = '广电';
+        if (strpos($___Provider, '电信') !== false || strpos($___Provider, 'TELECOM') !== false || strpos($___Provider, 'CHINANET' ) !== false) $Location[5] = '电信';
+        if (strpos($___Provider, '联通') !== false || strpos($___Provider, 'UNICOM' ) !== false || strpos($___Provider, 'CHINA169' ) !== false) $Location[5] = '联通';
+        if (strpos($___Provider, '移动') !== false || strpos($___Provider, 'MOBILE' ) !== false || strpos($___Provider, 'CMNET'    ) !== false) $Location[5] = '移动';
+        if (strpos($___Provider, '铁通') !== false || strpos($___Provider, 'TIETONG') !== false || strpos($___Provider, 'RAILWAT'  ) !== false) $Location[5] = '铁通';
+        if (strpos($___Provider, '教育') !== false || strpos($___Provider, 'CERNET' ) !== false || strpos($___Provider, 'EDUCATION') !== false) $Location[5] = '教育网';
     }
 
     return trim(preg_replace('/\s+/', ' ', implode(' ', $Location)));
@@ -248,7 +250,7 @@ function __QueryIpLocation_Ldd(string $Ip, array $Options): array {
 
 function __QueryIpLocation_Ipa(string $Ip, array $Options): array {
     try {
-        $Url = substr(base64_decode('LWh0dHBzOi8vZGVtby5pcC1hcGkuY29tL2pzb24v'), 1) . $Ip . substr(base64_decode('LT9maWVsZHM9Y291bnRyeSxyZWdpb25OYW1lLGNpdHksaXNwLGFzJmxhbmc9emgtQ04='), 1);
+        $Url = substr(base64_decode('LWh0dHBzOi8vZGVtby5pcC1hcGkuY29tL2pzb24v'), 1) . $Ip . substr(base64_decode('LT9maWVsZHM9Y291bnRyeSxyZWdpb25OYW1lLGNpdHksaXNwLGFzLG9yZyZsYW5nPXpoLUNO'), 1);
         $Hed = [
             'Accept'          => '*/*',
             'Accept-Language' => 'zh-CN,zh;q=0.9',
@@ -270,7 +272,7 @@ function __QueryIpLocation_Ipa(string $Ip, array $Options): array {
             ]
         ])), true);
 
-        return [$Rsp['country'], $Rsp['regionName'], $Rsp['city'], '', '', $Rsp['country'] == '中国' ? $Rsp['isp'] . $Rsp['as'] : $Rsp['isp']];
+        return [$Rsp['country'], $Rsp['regionName'], $Rsp['city'], '', '', $Rsp['country'] == '中国' ? $Rsp['isp'] . $Rsp['as'] . $Rsp['org'] : $Rsp['isp']];
     } catch (Exception $Error) {
         return [''] * 6;
     }
