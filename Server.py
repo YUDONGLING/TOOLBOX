@@ -1,7 +1,7 @@
 def _FindIp(Headers: dict, NameList: list, FallbackIp: str = '0.0.0.0') -> str:
     for _ in NameList:
         if _ in Headers:
-            _Ip = Headers[_].split(',')[0].strip() != ''
+            _Ip = Headers[_].split(',')[0].strip()
             if _Ip: return _Ip
     return FallbackIp
 
@@ -222,7 +222,7 @@ class FcWsgi(object):
 
         self.Header  = {}
         for _Key, _Value in self._Environ.items():
-            if _Key.startswith('HTTP_') and _Key not in ['HTTP_ALI_CDN_ADAPTIVE_PORTS', 'HTTP_ALI_CDN_REAL_IP', 'HTTP_ALI_SWIFT_LOG_HOST', 'HTTP_ALI_SWIFT_STAT_HOST', 'HTTP_EAGLEEYE_TRACEID', 'HTTP_VIA', 'HTTP_X_CDN_DAUTH_DATE', 'HTTP_X_CDN_ORIGIN_DAUTH', 'HTTP_X_CLIENT_SCHEME', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED_PROTO', 'HTTP_X_OSS_SECURITY_TOKEN', 'HTTP_X_FC_FUNCTION_HANDLER', 'HTTP_COOKIE']:
+            if _Key.startswith('HTTP_') and _Key not in ['HTTP_COOKIE']:
                 self.Header[
                     urllib.parse.unquote(_Key[5:].replace('_', '-').lower())
                 ] = urllib.parse.unquote(_Value)
@@ -440,7 +440,7 @@ class FlaskWsgi(object):
 
         self.Header  = {}
         for _Key, _Value in self._FlaskRequest.headers.items():
-            if _Key.upper() not in ['ALI-CDN-ADAPTIVE-PORTS', 'ALI-CDN-REAL-IP', 'ALI-SWIFT-LOG-HOST', 'ALI-SWIFT-STAT-HOST', 'EAGLEEYE-TRACEID', 'VIA', 'X-CDN-DAUTH-DATE', 'X-CDN-ORIGIN-DAUTH', 'X-CLIENT-SCHEME', 'X-FORWARDED-FOR', 'X-FORWARDED-PROTO', 'X-OSS-SECURITY-TOKEN', 'X-FC-FUNCTION-HANDLER', 'COOKIE']:
+            if _Key.upper() not in ['COOKIE']:
                 self.Header[
                     urllib.parse.unquote(_Key).lower()
                 ] = urllib.parse.unquote(_Value)
