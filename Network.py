@@ -90,8 +90,8 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
 
     DftOpts = {
         'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
-        'Provider_V4': 'UaInfo', # Bt, Zx, Ldd, Ipa, Ips, UaInfo
-        'Provider_V6': 'Zx',     # Zx, Ips
+        'Provider_V4': 'Bt',  # Bt, Zx, Ldd, Ipa, Ips, Cz88 (TBA)
+        'Provider_V6': 'Zx',  # Zx, Ips, Cz88 (TBA)
         'Timeout'    : 5
     }
     Options = MergeDictionaries(DftOpts, Options)
@@ -99,15 +99,14 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
     Provider = None
     if '.' in Ip and re.match(r'^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$', Ip): Provider = Options['Provider_V4']
     if ':' in Ip and re.match(r'^([\da-fA-F]{1,4}:){6}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^::([\da-fA-F]{1,4}:){0,4}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:):([\da-fA-F]{1,4}:){0,3}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){2}:([\da-fA-F]{1,4}:){0,2}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){3}:([\da-fA-F]{1,4}:){0,1}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){4}:((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$|^:((:[\da-fA-F]{1,4}){1,6}|:)$|^[\da-fA-F]{1,4}:((:[\da-fA-F]{1,4}){1,5}|:)$|^([\da-fA-F]{1,4}:){2}((:[\da-fA-F]{1,4}){1,4}|:)$|^([\da-fA-F]{1,4}:){3}((:[\da-fA-F]{1,4}){1,3}|:)$|^([\da-fA-F]{1,4}:){4}((:[\da-fA-F]{1,4}){1,2}|:)$|^([\da-fA-F]{1,4}:){5}:([\da-fA-F]{1,4})?$|^([\da-fA-F]{1,4}:){6}:$', Ip): Provider = Options['Provider_V6']
-    if not Provider in ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips', 'UaInfo']: return '未知 未知'
+    if not Provider in ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips']: return '未知 未知'
 
     Location = [''] * 6     # 国家, 省份, 城市, 区县, 地址, 网络
-    if  Provider == 'Bt'    : Location = __QueryIpLocation_Bt    (Ip, Options)
-    if  Provider == 'Zx'    : Location = __QueryIpLocation_Zx    (Ip, Options)
-    if  Provider == 'Ldd'   : Location = __QueryIpLocation_Ldd   (Ip, Options)
-    if  Provider == 'Ipa'   : Location = __QueryIpLocation_Ipa   (Ip, Options)
-    if  Provider == 'Ips'   : Location = __QueryIpLocation_Ips   (Ip, Options)
-    if  Provider == 'UaInfo': Location = __QueryIpLocation_UaInfo(Ip, Options)
+    if  Provider == 'Bt'    : Location = __QueryIpLocation_Bt (Ip, Options)
+    if  Provider == 'Zx'    : Location = __QueryIpLocation_Zx (Ip, Options)
+    if  Provider == 'Ldd'   : Location = __QueryIpLocation_Ldd(Ip, Options)
+    if  Provider == 'Ipa'   : Location = __QueryIpLocation_Ipa(Ip, Options)
+    if  Provider == 'Ips'   : Location = __QueryIpLocation_Ips(Ip, Options)
     if  Location == [''] * 6: return '未知 未知'
 
     Location = [str('' if _ is None else _) for _ in Location]
@@ -261,23 +260,5 @@ def __QueryIpLocation_Ips(Ip: str, Options: dict) -> list:
         __2 = re.search(r'<td class="th">运营商</td>[\s\S]*?<span>(.*?)</span>', Rsp)
 
         return (__1.split(' ') + [''] * 5)[:5] + [__2.group(1) if __2 else '']
-    except Exception as Error:
-        return [''] * 6
-
-
-def __QueryIpLocation_UaInfo(Ip: str, Options: dict) -> list:
-    import re
-    import json
-    import base64
-    import requests
-
-    try:
-        Url = base64.b64decode('LWh0dHBzOi8vaXAudXNlcmFnZW50aW5mby5jb20vanNvbnA/aXA9'.encode()).decode()[1:] + Ip
-        Hed = {
-            'User-Agent': Options['User-Agent']
-        }
-        Rsp = json.loads(requests.get(Url, headers = Hed, timeout = Options['Timeout']).text.removeprefix('callback(').removesuffix(');'))
-
-        return [Rsp['country'], Rsp['province'], Rsp['city'], Rsp['area'], '', Rsp['isp']]
     except Exception as Error:
         return [''] * 6
