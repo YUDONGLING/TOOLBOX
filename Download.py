@@ -282,7 +282,13 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
             Tsk.wait(show = False)
 
         if Tsk.result == 'success':
-            Kit = None; os.rename(Tsk.info, Path)
+            Kit = None
+
+            if Tsk.info != Path:
+                if os.path.exists(Path):
+                    os.remove(Path)
+                os.rename(Tsk.info, Path)
+
             Response['Size'] = os.path.getsize(Path)
         else:
             Kit = None
