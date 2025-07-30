@@ -1,3 +1,25 @@
+global _ConfigCache; _ConfigCache = {}
+
+
+def __getattr__(Name: str):
+    if Name not in ('ExeConfig', 'EnvironVar'):
+        raise AttributeError(f'Can\'t Get Attribute of \'{Name}\'')
+
+    if Name == 'ExeConfig':
+        if 'ExeConfig' not in _ConfigCache: _ConfigCache['ExeConfig'] = ReadConfig()
+        return _ConfigCache['ExeConfig']
+    
+    if Name == 'EnvironVar':
+        if 'EnvironVar' not in _ConfigCache: _ConfigCache['EnvironVar'] = ReadEnvironVar()
+        return _ConfigCache['EnvironVar']
+
+
+def __setattr__(Name: str, Value):
+    if Name in ('ExeConfig', 'EnvironVar'):
+        _ConfigCache[Name] = Value
+    raise AttributeError(f'Can\'t Set Attribute of \'{Name}\'')
+
+
 def AsyncCall(Function: callable, *Args, **Kwargs) -> object:
     '''
     Call a Function Asynchronously. \n
@@ -43,13 +65,16 @@ def MergeDictionaries(Base: dict, Override: dict) -> dict:
     return Cfg
 
 
-def ReadConfig(Path: str = 'ExeConfig.json') -> dict:
+def ReadConfig(Path: str = None) -> dict:
     '''
     Read Configuration from a JSON File.
     '''
     import os
     import json
     import portalocker
+
+    if Path == None:
+        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'ExeConfig.json')
 
     if os.path.exists(Path):
         with portalocker.Lock(Path, 'r') as File:
@@ -58,14 +83,14 @@ def ReadConfig(Path: str = 'ExeConfig.json') -> dict:
     raise FileNotFoundError('FILE DOES NOT EXIST'.title())
 
 
-def EncryptConfig(Path: str = 'ExeConfig.json') -> None:
+def EncryptConfig(Path: str = None) -> None:
     '''
     Encrypt Configuration and Save to a JSON File.
     '''
     raise NotImplementedError() # return SetConfig({}, Path)
 
 
-def SetConfig(Cfg: dict, Path: str = 'ExeConfig.json', **Kwargs) -> None:
+def SetConfig(Cfg: dict, Path: str = None, **Kwargs) -> None:
     '''
     Write Configuration to a JSON File. \n
     Use `Merge = True` to Merge the Configuration with Existing Config File.
@@ -73,6 +98,9 @@ def SetConfig(Cfg: dict, Path: str = 'ExeConfig.json', **Kwargs) -> None:
     '''
     import os
     import json
+
+    if Path == None:
+        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'ExeConfig.json')
 
     if os.path.exists(Path):
         if Kwargs.get('Merge', True):
@@ -88,7 +116,18 @@ def SetConfig(Cfg: dict, Path: str = 'ExeConfig.json', **Kwargs) -> None:
         File.write(json.dumps(Cfg, indent = 4, ensure_ascii = False))
 
 
-def ReadEnvironVar(Path: str = 'EnvironVariable.json' or 'EnvironVariable_AES.json') -> dict:
+def ReloadConfig(Path: str = None) -> dict:
+    '''
+    Reload Configuration from a JSON File.
+    '''
+    import os
+
+    if Path == None:
+        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'ExeConfig.json')
+    _ConfigCache['ExeConfig'] = ReadConfig(Path)
+
+
+def ReadEnvironVar(Path: str = None) -> dict:
     '''
     Decrypt Environment Variable from a JSON File.
     '''
@@ -105,6 +144,9 @@ def ReadEnvironVar(Path: str = 'EnvironVariable.json' or 'EnvironVariable_AES.js
                 Data[Key] = __Decrypt__(Value, Fernet)
         return Data
 
+    if Path == None:
+        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'EnvironVariable.json' or 'EnvironVariable_AES.json')
+
     Root, Extension = os.path.splitext(Path)
 
     RawEnvPath = (Root.removesuffix('_AES') + Extension) if Root.endswith('_AES') else Path
@@ -119,14 +161,14 @@ def ReadEnvironVar(Path: str = 'EnvironVariable.json' or 'EnvironVariable_AES.js
     raise FileNotFoundError('FILE DOES NOT EXIST'.title())
 
 
-def EncryptEnvironVar(Path: str = 'EnvironVariable.json' or 'EnvironVariable_AES.json') -> None:
+def EncryptEnvironVar(Path: str = None) -> None:
     '''
     Encrypt Environment Variable and Save to a JSON File.
     '''
     return SetEnvironVar({}, Path)
 
 
-def SetEnvironVar(Env: dict, Path: str = 'EnvironVariable.json' or 'EnvironVariable_AES.json', **Kwargs) -> None:
+def SetEnvironVar(Env: dict, Path: str = None, **Kwargs) -> None:
     '''
     Write Environment Variable to a JSON File. \n
     Use `Merge = True` to Merge the Environment Variable with Existing File.
@@ -144,6 +186,9 @@ def SetEnvironVar(Env: dict, Path: str = 'EnvironVariable.json' or 'EnvironVaria
                 if Key in ['AesKey', 'Type']: continue
                 Data[Key] = __Encrypt__(Value, Fernet)
         return Data
+
+    if Path == None:
+        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'EnvironVariable.json' or 'EnvironVariable_AES.json')
 
     Root, Extension = os.path.splitext(Path)
     RawEnvPath = (Root.removesuffix('_AES') + Extension) if Root.endswith('_AES') else Path
@@ -164,3 +209,14 @@ def SetEnvironVar(Env: dict, Path: str = 'EnvironVariable.json' or 'EnvironVaria
 
     SetConfig(Env, RawEnvPath, Merge = False, Force = True)
     SetConfig(__Encrypt__(Env, Fernet(AesKey)), AesEnvPath, Merge = False, Force = True)
+
+
+def ReloadEnvironVar(Path: str = None) -> dict:
+    '''
+    Reload Environment Variable from a JSON File.
+    '''
+    import os
+
+    if Path == None:
+        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'EnvironVariable.json' or 'EnvironVariable_AES.json')
+    _ConfigCache['EnvironVar'] = ReadEnvironVar(Path)

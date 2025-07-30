@@ -1,5 +1,47 @@
 <?php
 
+global $_ConfigCache;
+$_ConfigCache = [];
+
+/**
+ * Get ExeConfig from Cache or Load it.
+ * @return array Configuration Data
+ */
+function GetExeConfig(): array {
+    global $_ConfigCache;
+    if (!isset($_ConfigCache["ExeConfig"])) {
+        $_ConfigCache["ExeConfig"] = ReadConfig();
+    }
+    return $_ConfigCache["ExeConfig"];
+}
+
+/**
+ * Get EnvironVar from Cache or Load it.
+ * @return array Environment Variables
+ */
+function GetEnvironVar(): array {
+    global $_ConfigCache;
+    if (!isset($_ConfigCache["EnvironVar"])) {
+        $_ConfigCache["EnvironVar"] = ReadEnvironVar();
+    }
+    return $_ConfigCache["EnvironVar"];
+}
+
+/**
+ * Set Cached Configuration Data.
+ * @param string $Name Config type ("ExeConfig" or "EnvironVar")
+ * @param array $Value Configuration Data
+ * @throws Exception If Name is Invalid
+ */
+function SetCachedConfig(string $Name, array $Value): void {
+    global $_ConfigCache;
+    if ($Name === "ExeConfig" || $Name === "EnvironVar") {
+        $_ConfigCache[$Name] = $Value;
+    } else {
+        throw new Exception("Can't Set Configuration of '{$Name}'");
+    }
+}
+
 /**
  * Call a Function Asynchronously.
  * Return an `Concurrent.Future` Object, with Customized Method `waitResult()` to Close the ThreadPoolExecutor and Return the Result.
@@ -39,7 +81,10 @@ function MergeDictionaries(array $Base, array $Override): array {
 /**
  * Read Configuration from a JSON File.
  */
-function ReadConfig(string $Path = "ExeConfig.json"): array {
+function ReadConfig(string $Path = null): array {
+    if ($Path === null) {
+        $Path = dirname(__FILE__) . '/ExeConfig.json';
+    }
     if (file_exists($Path)) {
         $Fp = fopen($Path, "r");
         if ($Fp === false) {
@@ -67,7 +112,7 @@ function ReadConfig(string $Path = "ExeConfig.json"): array {
 /**
  * Encrypt Configuration and Save to a JSON File.
  */
-function EncryptConfig(string $Path = "ExeConfig.json"): void {
+function EncryptConfig(string $Path = null): void {
     throw new Exception("Not Implemented"); # return SetConfig([], $Path);
 }
 
@@ -77,7 +122,10 @@ function EncryptConfig(string $Path = "ExeConfig.json"): void {
  * Use `Merge = true` to Merge the Configuration with Existing Config File.
  * Use `Force = true` to Overwrite the Existing Config File (if Merge is Disabled).
  */
-function SetConfig(array $Cfg, string $Path = "ExeConfig.json", bool $Merge = true, bool $Force = false): void {
+function SetConfig(array $Cfg, string $Path = null, bool $Merge = true, bool $Force = false): void {
+    if ($Path === null) {
+        $Path = dirname(__FILE__) . '/ExeConfig.json';
+    }
     if (file_exists($Path)) {
         if ($Merge) {
             $Cfg = MergeDictionaries(ReadConfig($Path), $Cfg);
@@ -106,9 +154,21 @@ function SetConfig(array $Cfg, string $Path = "ExeConfig.json", bool $Merge = tr
 }
 
 /**
+ * Reload Configuration from a JSON File.
+ */
+function ReloadConfig(string $Path = null): array {
+    global $_ConfigCache;
+    if ($Path === null) {
+        $Path = dirname(__FILE__) . '/ExeConfig.json';
+    }
+    $_ConfigCache['ExeConfig'] = ReadConfig($Path);
+    return $_ConfigCache['ExeConfig'];
+}
+
+/**
  * Decrypt Environment Variable from a JSON File.
  */
-function ReadEnvironVar(string $Path = "EnvironVariable.json"): array {
+function ReadEnvironVar(string $Path = null): array {
     function __Decrypt__($Data, $Fernet) {
         if (is_string($Data)) {
             return $Fernet->decrypt($Data);
@@ -119,6 +179,10 @@ function ReadEnvironVar(string $Path = "EnvironVariable.json"): array {
             }
         }
         return $Data;
+    }
+
+    if ($Path === null) {
+        $Path = dirname(__FILE__) . '/EnvironVariable.json';
     }
 
     $Root = pathinfo($Path, PATHINFO_FILENAME);
@@ -145,7 +209,7 @@ function ReadEnvironVar(string $Path = "EnvironVariable.json"): array {
 /**
  * Encrypt Environment Variable and Save to a JSON File.
  */
-function EncryptEnvironVar(string $Path = "EnvironVariable.json"): void {
+function EncryptEnvironVar(string $Path = null): void {
     SetEnvironVar([], $Path);
 }
 
@@ -155,7 +219,7 @@ function EncryptEnvironVar(string $Path = "EnvironVariable.json"): void {
  * Use `Merge = true` to Merge the Environment Variable with Existing File.
  * Use `Force = true` to Overwrite the Existing File (if Merge is Disabled).
  */
-function SetEnvironVar(array $Env, string $Path = "EnvironVariable.json", bool $Merge = true, bool $Force = false): void {
+function SetEnvironVar(array $Env, string $Path = null, bool $Merge = true, bool $Force = false): void {
     function __Encrypt__($Data, $Fernet) {
         if (is_string($Data)) {
             return $Fernet->encrypt($Data);
@@ -166,6 +230,10 @@ function SetEnvironVar(array $Env, string $Path = "EnvironVariable.json", bool $
             }
         }
         return $Data;
+    }
+
+    if ($Path === null) {
+        $Path = dirname(__FILE__) . '/EnvironVariable.json';
     }
 
     $Root = pathinfo($Path, PATHINFO_FILENAME);
@@ -192,6 +260,18 @@ function SetEnvironVar(array $Env, string $Path = "EnvironVariable.json", bool $
 
     SetConfig($Env, $RawEnvPath, false, true);
     SetConfig(__Encrypt__($Env, $Fernet), $AesEnvPath, false, true);
+}
+
+/**
+ * Reload Environment Variable from a JSON File.
+ */
+function ReloadEnvironVar(string $Path = null): array {
+    global $_ConfigCache;
+    if ($Path === null) {
+        $Path = dirname(__FILE__) . '/EnvironVariable.json';
+    }
+    $_ConfigCache['EnvironVar'] = ReadEnvironVar($Path);
+    return $_ConfigCache['EnvironVar'];
 }
 
 ?>
