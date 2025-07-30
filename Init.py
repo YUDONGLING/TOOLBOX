@@ -79,7 +79,7 @@ def ReadConfig(Path: str = None) -> dict:
                 os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ExeConfig.json')
 
     if os.path.exists(Path):
-        with portalocker.Lock(Path, 'r') as File:
+        with portalocker.Lock(Path, 'r', encoding = 'utf-8') as File:
             return json.loads(File.read())
 
     raise FileNotFoundError('FILE DOES NOT EXIST'.title())
@@ -116,7 +116,7 @@ def SetConfig(Cfg: dict, Path: str = None, **Kwargs) -> None:
 
     import portalocker
 
-    with portalocker.Lock(Path, 'w') as File:
+    with portalocker.Lock(Path, 'w', encoding = 'utf-8') as File:
         File.write(json.dumps(Cfg, indent = 4, ensure_ascii = False))
 
 
