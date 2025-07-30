@@ -70,11 +70,13 @@ def ReadConfig(Path: str = None) -> dict:
     Read Configuration from a JSON File.
     '''
     import os
+    import sys
     import json
     import portalocker
 
     if Path == None:
-        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'ExeConfig.json')
+        Path = os.path.join(os.path.dirname(sys.executable), 'ExeConfig.json') if getattr(sys, 'frozen', False) else \
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ExeConfig.json')
 
     if os.path.exists(Path):
         with portalocker.Lock(Path, 'r') as File:
@@ -97,10 +99,12 @@ def SetConfig(Cfg: dict, Path: str = None, **Kwargs) -> None:
     Use `Force = True` to Overwrite the Existing Config File (if Merge is Disabled).
     '''
     import os
+    import sys
     import json
 
     if Path == None:
-        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'ExeConfig.json')
+        Path = os.path.join(os.path.dirname(sys.executable), 'ExeConfig.json') if getattr(sys, 'frozen', False) else \
+               os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ExeConfig.json')
 
     if os.path.exists(Path):
         if Kwargs.get('Merge', True):
@@ -121,9 +125,12 @@ def ReloadConfig(Path: str = None) -> dict:
     Reload Configuration from a JSON File.
     '''
     import os
+    import sys
 
     if Path == None:
-        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'ExeConfig.json')
+        Path = os.path.join(os.path.dirname(sys.executable), 'ExeConfig.json') if getattr(sys, 'frozen', False) else \
+               os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ExeConfig.json')
+
     _ConfigCache['ExeConfig'] = ReadConfig(Path)
 
 
@@ -132,6 +139,7 @@ def ReadEnvironVar(Path: str = None) -> dict:
     Decrypt Environment Variable from a JSON File.
     '''
     import os
+    import sys
 
     def __Decrypt__(Data, Fernet):
         if isinstance(Data, str):
@@ -145,7 +153,8 @@ def ReadEnvironVar(Path: str = None) -> dict:
         return Data
 
     if Path == None:
-        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'EnvironVariable.json' or 'EnvironVariable_AES.json')
+        Path = os.path.join(os.path.dirname(sys.executable), 'EnvironVariable.json' or 'EnvironVariable_AES.json') if getattr(sys, 'frozen', False) else \
+               os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'EnvironVariable.json' or 'EnvironVariable_AES.json')
 
     Root, Extension = os.path.splitext(Path)
 
@@ -175,6 +184,7 @@ def SetEnvironVar(Env: dict, Path: str = None, **Kwargs) -> None:
     Use `Force = True` to Overwrite the Existing File (if Merge is Disabled).
     '''
     import os
+    import sys
 
     def __Encrypt__(Data, Fernet):
         if isinstance(Data, str):
@@ -188,7 +198,8 @@ def SetEnvironVar(Env: dict, Path: str = None, **Kwargs) -> None:
         return Data
 
     if Path == None:
-        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'EnvironVariable.json' or 'EnvironVariable_AES.json')
+        Path = os.path.join(os.path.dirname(sys.executable), 'EnvironVariable.json' or 'EnvironVariable_AES.json') if getattr(sys, 'frozen', False) else \
+               os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'EnvironVariable.json' or 'EnvironVariable_AES.json')
 
     Root, Extension = os.path.splitext(Path)
     RawEnvPath = (Root.removesuffix('_AES') + Extension) if Root.endswith('_AES') else Path
@@ -216,7 +227,10 @@ def ReloadEnvironVar(Path: str = None) -> dict:
     Reload Environment Variable from a JSON File.
     '''
     import os
+    import sys
 
     if Path == None:
-        Path = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'EnvironVariable.json' or 'EnvironVariable_AES.json')
+        Path = os.path.join(os.path.dirname(sys.executable), 'EnvironVariable.json' or 'EnvironVariable_AES.json') if getattr(sys, 'frozen', False) else \
+               os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'EnvironVariable.json' or 'EnvironVariable_AES.json')
+
     _ConfigCache['EnvironVar'] = ReadEnvironVar(Path)
