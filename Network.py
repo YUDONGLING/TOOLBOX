@@ -174,7 +174,6 @@ def __QueryIpLocation_Zx(Ip: str, Options: dict) -> list:
 
 
 def __QueryIpLocation_Ldd(Ip: str, Options: dict) -> list:
-    import re
     import base64
     import requests
 
@@ -206,7 +205,6 @@ def __QueryIpLocation_Ldd(Ip: str, Options: dict) -> list:
 
 
 def __QueryIpLocation_Ipa(Ip: str, Options: dict) -> list:
-    import re
     import base64
     import requests
 
