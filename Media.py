@@ -136,6 +136,7 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
     '''
     import os
     import PIL.Image
+    import pillow_heif
 
     if not __package__:
           from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  UUID import TimeUUID
@@ -162,6 +163,8 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
+        pillow_heif.register_heif_opener()
+
         Image  = PIL.Image.open(Path).convert('RGB')
         Ratio1 = float(Image.width) / float(Image.height)
         Ratio2 = float(Options['Size'][0]) / float(Options['Size'][1])
