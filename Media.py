@@ -165,22 +165,34 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
     try:
         pillow_heif.register_heif_opener()
 
-        Image  = PIL.Image.open(Path).convert('RGB')
-        Ratio1 = float(Image.width) / float(Image.height)
-        Ratio2 = float(Options['Size'][0]) / float(Options['Size'][1])
+        Image = PIL.Image.open(Path).convert('RGB')
 
-        if Ratio1 > Ratio2:
-            _      = int(Image.height * Ratio2)
-            Margin = (Image.width - _) // 2
-            Image  = Image.crop((Margin, 0, Margin + _, Image.height))
-        else: 
-            _      = int(Image.width / Ratio2)
-            Margin = (Image.height - _) // 2
-            Image  = Image.crop((0, Margin, Image.width, Margin + _))
+        if Options['Size'][0] <= 0 or Options['Size'][1] <= 0:
+            if Options['Size'][1] <= 0: # 按宽度等比例缩放
+                Ratio_Resize = float(Options['Size'][0]) / float(Image.width)
+                Options['Size'] = (Options['Size'][0], int(Image.height * Ratio_Resize))
+            else: # 按高度等比例缩放
+                Ratio_Resize = float(Options['Size'][1]) / float(Image.height)
+                Options['Size'] = (int(Image.width * Ratio_Resize), Options['Size'][1])
 
-        Image.thumbnail((min(Options['Size'][0], Image.width), min(Options['Size'][1], Image.height)))
+            Image = Image.resize(Options['Size'], PIL.Image.LANCZOS)
+
+        else:
+            Ratio_Orig = float(Image.width) / float(Image.height)
+            Ratio_Crop = float(Options['Size'][0]) / float(Options['Size'][1])
+
+            if Ratio_Orig > Ratio_Crop:
+                _      = int(Image.height * Ratio_Crop)
+                Margin = (Image.width - _) // 2
+                Image  = Image.crop((Margin, 0, Margin + _, Image.height))
+            else: 
+                _      = int(Image.width / Ratio_Crop)
+                Margin = (Image.height - _) // 2
+                Image  = Image.crop((0, Margin, Image.width, Margin + _))
+
+            Image.thumbnail((min(Options['Size'][0], Image.width), min(Options['Size'][1], Image.height)))
+
         Image.save(Options['Path'], quality = Options['Quality'], format = 'JPEG')
-
         Response['Path'] = Options['Path']
         Response['Size'] = os.path.getsize(Options['Path'])
     except Exception as Error:
