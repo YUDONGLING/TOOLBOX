@@ -111,20 +111,26 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
     }
 
     try:
-        if os.path.dirname(Path):
-            os.makedirs(os.path.dirname(Path), exist_ok = True)
-    except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
-
-    try:
         Head = HeadUrl(Url, Options); Response.update({Key: Value for Key, Value in Head.items() if Key not in ['Ec', 'Em', 'Size']})
 
         if Head['Ec']          != 0: raise Exception(Head['Em'])
         if Head['Code'] // 100 != 2: raise Exception(f'HTTP Code is {Head["Code"]}')
 
-        Tool = 'DownloadKit' if Head['Content-Length'] > Options['DownloadKit.Block'] else 'Requests'
+        Tool = 'Requests' if Head['Content-Length'] <= Options['DownloadKit.Block'] else 'DownloadKit'
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    try:
+        if os.path.isabs(Path):
+            Path = os.path.abspath(Path)
+    except Exception as Error:
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    try:
+        if os.path.dirname(Path):
+            os.makedirs(os.path.dirname(Path), exist_ok = True)
+    except Exception as Error:
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         if Tool == 'Requests':
@@ -137,7 +143,7 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
 
         Response['Size'] = Download['Size']
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50004; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         if Options['Time']:
@@ -145,8 +151,8 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
         elif Head['Last-Modified-At'] > 0:
             os.utime(Path, (int(Head['Last-Modified-At']), int(Head['Last-Modified-At'])))
     except Exception as Error:
-        Response['Ec'] = 50004; Response['Em'] = MakeErrorMessage(Error); return Response
-    
+        Response['Ec'] = 50005; Response['Em'] = MakeErrorMessage(Error); return Response
+
     return Response
 
 
