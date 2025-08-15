@@ -76,7 +76,7 @@ def ReadConfig(Path: str = None) -> dict:
 
     if Path == None:
         Path = os.path.join(os.path.dirname(sys.executable), 'ExeConfig.json') if getattr(sys, 'frozen', False) else \
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ExeConfig.json')
+               os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ExeConfig.json')
 
     if os.path.exists(Path):
         with portalocker.Lock(Path, 'r', encoding = 'utf-8') as File:
