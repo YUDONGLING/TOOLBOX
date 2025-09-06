@@ -1,0 +1,16 @@
+alibabacloud_openapi_util==0.2.2
+alibabacloud_tea_openapi==0.3.8
+alibabacloud_tea_util==0.3.11
+cryptography==41.0.1
+DownloadKit==2.0.7
+fitz==0.0.1.dev2
+opencv_python==4.7.0.72
+opencv_python_headless==4.10.0.84
+oss2==2.18.4
+Pillow==11.3.0
+pillow_heif==1.1.0
+portalocker==2.8.2
+requests==2.31.0
+requests_toolbelt==1.0.0
+selenium==4.15.2
+tqdm==4.64.1
