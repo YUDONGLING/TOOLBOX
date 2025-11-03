@@ -477,7 +477,7 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback = N
         'Region'    : '',
         'Bucket'    : '',
         'Policy'    : '',
-        'Permission': '',
+        'Permission': None,
         'Endpoint'  : None,
         'AK'        : '',
         'Sign'      : '',
@@ -499,8 +499,8 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback = N
         if [_Key for _Key in ['Region'] if not Options[_Key]] and Options['Endpoint'] is None:
             raise Exception('Missing Required Fields')
 
-        if not Options['Permission'] in ['private', 'public-read', 'public-read-write']:
-            Options['Permission'] = 'private'
+        if not Options['Permission'] in ['private', 'public-read', 'public-read-write', 'default']:
+            Options['Permission'] = 'default'
 
         if not Options['Endpoint']:
             Options['Endpoint'] = {}
