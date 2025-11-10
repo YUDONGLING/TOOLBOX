@@ -90,8 +90,8 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
 
     DftOpts = {
         'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
-        'Provider_V4': 'Bt',  # Bt, Zx, Ldd, Ipa, Ips, Cz88 (TBA)
-        'Provider_V6': 'Zx',  # Zx, Ips, Cz88 (TBA)
+        'Provider_V4': 'Bt',  # Bt, Zx, Ldd, Ipa, Ips, Dashi, Cz88 (TBA)
+        'Provider_V6': 'Zx',  # Zx, Ips, Dashi, Cz88 (TBA)
         'Timeout'    : 5
     }
     Options = MergeDictionaries(DftOpts, Options)
@@ -99,14 +99,15 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
     Provider = None
     if '.' in Ip and re.match(r'^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$', Ip): Provider = Options['Provider_V4']
     if ':' in Ip and re.match(r'^([\da-fA-F]{1,4}:){6}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^::([\da-fA-F]{1,4}:){0,4}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:):([\da-fA-F]{1,4}:){0,3}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){2}:([\da-fA-F]{1,4}:){0,2}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){3}:([\da-fA-F]{1,4}:){0,1}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){4}:((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$|^:((:[\da-fA-F]{1,4}){1,6}|:)$|^[\da-fA-F]{1,4}:((:[\da-fA-F]{1,4}){1,5}|:)$|^([\da-fA-F]{1,4}:){2}((:[\da-fA-F]{1,4}){1,4}|:)$|^([\da-fA-F]{1,4}:){3}((:[\da-fA-F]{1,4}){1,3}|:)$|^([\da-fA-F]{1,4}:){4}((:[\da-fA-F]{1,4}){1,2}|:)$|^([\da-fA-F]{1,4}:){5}:([\da-fA-F]{1,4})?$|^([\da-fA-F]{1,4}:){6}:$', Ip): Provider = Options['Provider_V6']
-    if not Provider in ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips']: return '未知 未知'
+    if not Provider in ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips', 'Dashi']: return '未知 未知'
 
     Location = [''] * 6     # 国家, 省份, 城市, 区县, 地址, 网络
-    if  Provider == 'Bt'    : Location = __QueryIpLocation_Bt (Ip, Options)
-    if  Provider == 'Zx'    : Location = __QueryIpLocation_Zx (Ip, Options)
-    if  Provider == 'Ldd'   : Location = __QueryIpLocation_Ldd(Ip, Options)
-    if  Provider == 'Ipa'   : Location = __QueryIpLocation_Ipa(Ip, Options)
-    if  Provider == 'Ips'   : Location = __QueryIpLocation_Ips(Ip, Options)
+    if  Provider == 'Bt'    : Location = __QueryIpLocation_Bt   (Ip, Options)
+    if  Provider == 'Zx'    : Location = __QueryIpLocation_Zx   (Ip, Options)
+    if  Provider == 'Ldd'   : Location = __QueryIpLocation_Ldd  (Ip, Options)
+    if  Provider == 'Ipa'   : Location = __QueryIpLocation_Ipa  (Ip, Options)
+    if  Provider == 'Ips'   : Location = __QueryIpLocation_Ips  (Ip, Options)
+    if  Provider == 'Dashi' : Location = __QueryIpLocation_Dashi(Ip, Options)
     if  Location == [''] * 6: return '未知 未知'
 
     Location = [str('' if _ is None else _) for _ in Location]
@@ -122,12 +123,14 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
         Location[3] = re.sub(r'(管理区管委会|行政委员会|风景名胜区|林区|市|县|区)$', '', Location[3]) if len(Location[3]) > 2 and not re.search(r'(管理区|回族区|聚集区|开发区|示范区|食品区|实验区|自治县|矿区|新区|园区|族区)$', Location[3]) else Location[3]
 
         # 网络 Network Provider
-        if any([_ in Location[5].upper() for _ in ['CABLE'  , 'BROADCAST', '广电']]): Location[5] = '广电'
-        if any([_ in Location[5].upper() for _ in ['TELECOM', 'CHINANET' , '电信']]): Location[5] = '电信'
-        if any([_ in Location[5].upper() for _ in ['UNICOM' , 'CHINA169' , '联通']]): Location[5] = '联通'
-        if any([_ in Location[5].upper() for _ in ['MOBILE' , 'CMNET'    , '移动']]): Location[5] = '移动'
-        if any([_ in Location[5].upper() for _ in ['TIETONG', 'RAILWAT'  , '铁通']]): Location[5] = '铁通'
-        if any([_ in Location[5].upper() for _ in ['CERNET' , 'EDUCATION', '教育']]): Location[5] = '教育网'
+        if any([_ in Location[5].upper() for _ in ['广电', 'CABLE'  , 'BROADCAST'       ]]): Location[5] = '广电'
+        if any([_ in Location[5].upper() for _ in ['电信', 'TELECOM', 'CHINANET'        ]]): Location[5] = '电信'
+        if any([_ in Location[5].upper() for _ in ['联通', 'UNICOM' , 'CHINA169'        ]]): Location[5] = '联通'
+        if any([_ in Location[5].upper() for _ in ['移动', 'MOBILE' , 'CMNET'           ]]): Location[5] = '移动'
+        if any([_ in Location[5].upper() for _ in ['铁通', 'TIETONG', 'RAILWAT'         ]]): Location[5] = '铁通'
+        if any([_ in Location[5].upper() for _ in ['教育', 'CERNET' , 'EDUCATION'       ]]): Location[5] = '教育网'
+        if any([_ in Location[5].upper() for _ in ['阿里', 'ALIBABA', 'ALIYUN', 'TAOBAO']]): Location[5] = '阿里云'
+        if any([_ in Location[5].upper() for _ in ['腾讯', 'TENCENT', 'QQ'    , 'WECHAT']]): Location[5] = '腾讯云'
 
     return re.sub(r'\s+', ' ', ' '.join(Location)).strip()
 
@@ -139,7 +142,8 @@ def __QueryIpLocation_Bt(Ip: str, Options: dict) -> list:
     try:
         Url = base64.b64decode('LWh0dHBzOi8vd3d3LmJ0LmNuL2FwaS9wYW5lbC9nZXRfaXBfaW5mbz9pcD0='.encode()).decode()[1:] + Ip
         Hed = {
-            'User-Agent': 'BT-Panel'
+            'User-Agent'     : 'BT-Panel',
+            'X-Forwarded-For': Ip
         }
         Rsp = requests.get(Url, headers= Hed, timeout = Options['Timeout']).json()[Ip]
 
@@ -164,6 +168,7 @@ def __QueryIpLocation_Zx(Ip: str, Options: dict) -> list:
             'Priority'        : 'u=1, i',
             'Referer'         : base64.b64decode('LWh0dHBzOi8vaXAuenhpbmMub3JnL2lwcXVlcnkv'.encode()).decode()[1:],
             'User-Agent'      : Options['User-Agent'],
+            'X-Forwarded-For' : Ip,
             'X-Requested-With': 'XMLHttpRequest'
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()['data']
@@ -192,7 +197,8 @@ def __QueryIpLocation_Ldd(Ip: str, Options: dict) -> list:
             'Sec-Fetch-Dest' : 'empty',
             'Sec-Fetch-Mode' : 'cors',
             'Sec-Fetch-Site' : 'same-site',
-            'User-Agent'     : Options['User-Agent']
+            'User-Agent'     : Options['User-Agent'],
+            'X-Forwarded-For': Ip
         }
         Dat = {
             'ip': Ip
@@ -222,7 +228,8 @@ def __QueryIpLocation_Ipa(Ip: str, Options: dict) -> list:
             'Sec-Fetch-Dest' : 'empty',
             'Sec-Fetch-Mode' : 'cors',
             'Sec-Fetch-Site' : 'same-site',
-            'User-Agent'     : Options['User-Agent']
+            'User-Agent'     : Options['User-Agent'],
+            'X-Forwarded-For': Ip
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()
 
@@ -250,7 +257,8 @@ def __QueryIpLocation_Ips(Ip: str, Options: dict) -> list:
             'Sec-Fetch-Site'           : 'none',
             'Sec-Fetch-User'           : '?1',
             'Upgrade-Insecure-Requests': '1',
-            'User-Agent'               : Options['User-Agent']
+            'User-Agent'               : Options['User-Agent'],
+            'X-Forwarded-For'          : Ip
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout'], allow_redirects = False).text
 
@@ -258,5 +266,35 @@ def __QueryIpLocation_Ips(Ip: str, Options: dict) -> list:
         __2 = re.search(r'<td class="th">运营商</td>[\s\S]*?<span>(.*?)</span>', Rsp)
 
         return (__1.split(' ') + [''] * 5)[:5] + [__2.group(1) if __2 else '']
+    except Exception as Error:
+        return [''] * 6
+
+
+def __QueryIpLocation_Dashi(Ip: str, Options: dict) -> list:
+    import re
+    import base64
+    import requests
+
+    try:
+      # Url = base64.b64decode('LWh0dHBzOi8vbWFpbC4xNjMuY29tL2Zndy9tYWlsc3J2LWlwZGV0YWlsL2RldGFpbA=='.encode()).decode()[1:]
+        Url = base64.b64decode('LWh0dHBzOi8vZGFzaGkuMTYzLmNvbS9mZ3cvbWFpbHNydi1pcGRldGFpbC9kZXRhaWw='.encode()).decode()[1:]
+        Hed = {
+            'Accept'                   : 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language'          : 'zh-CN,zh;q=0.9',
+            'Cache-Control'            : 'no-cache',
+            'Connection'               : 'keep-alive',
+            'DNT'                      : '1',
+            'Pragma'                   : 'no-cache',
+            'Sec-Fetch-Dest'           : 'document',
+            'Sec-Fetch-Mode'           : 'navigate',
+            'Sec-Fetch-Site'           : 'none',
+            'Sec-Fetch-User'           : '?1',
+            'Upgrade-Insecure-Requests': '1',
+            'User-Agent'               : Options['User-Agent'],
+            'X-Forwarded-For'          : Ip
+        }
+        Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()['result']
+
+        return [Rsp['country'].replace('UNKNOWN', ''), Rsp['province'].replace('UNKNOWN', ''), Rsp['city'].replace('UNKNOWN', ''), '', '', (Rsp['isp'] + Rsp['org']).replace('UNKNOWN', '') if Rsp['country'] == '中国' else Rsp['isp'].replace('UNKNOWN', '')]
     except Exception as Error:
         return [''] * 6
