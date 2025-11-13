@@ -110,12 +110,19 @@ function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $
 
 /**
  * Query the Location of an IP Address.
+ * 
+ * Bt   : IPv4 (国内 区县级, 国外 国家级)
+ * Zx   : IPv4 (国内 城市级, 国外 国家级), IPv6 (国内 城市级, 国外 省份级)
+ * Ldd  : IPv4 (国内 区县级, 国外 城市级), IPv6 (国内 城市级, 国外 省份级)
+ * Ipa  : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
+ * Ips  : IPv4 (国内 区县级, 国外 城市级), IPv6 (国内 省份级, 国外 省份级)
+ * Dashi: IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
  */
 function QueryIpLocation(string $Ip, array $Options = null): string {
     $DftOpts = [
         'User-Agent'  => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
-        'Provider_V4' => 'UaInfo', // Bt, Zx, Ldd, Ipa, Ips, UaInfo
-        'Provider_V6' => 'Zx',     // Zx, Ips
+        'Provider_V4' => 'Bt',    // Bt, Zx, Ldd, Ipa, Ips, Dashi, Cz88 (TBA)
+        'Provider_V6' => 'Dashi', // Zx, Ips, Dashi, Cz88 (TBA)
         'Timeout'     => 5
     ];
     $Options = MergeDictionaries($DftOpts, $Options);
@@ -127,17 +134,17 @@ function QueryIpLocation(string $Ip, array $Options = null): string {
     if (strpos($Ip, ':') !== false && preg_match('/^([\da-fA-F]{1,4}:){6}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^::([\da-fA-F]{1,4}:){0,4}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:):([\da-fA-F]{1,4}:){0,3}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){2}:([\da-fA-F]{1,4}:){0,2}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){3}:([\da-fA-F]{1,4}:){0,1}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){4}:((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$|^:((:[\da-fA-F]{1,4}){1,6}|:)$|^[\da-fA-F]{1,4}:((:[\da-fA-F]{1,4}){1,5}|:)$|^([\da-fA-F]{1,4}:){2}((:[\da-fA-F]{1,4}){1,4}|:)$|^([\da-fA-F]{1,4}:){3}((:[\da-fA-F]{1,4}){1,3}|:)$|^([\da-fA-F]{1,4}:){4}((:[\da-fA-F]{1,4}){1,2}|:)$|^([\da-fA-F]{1,4}:){5}:([\da-fA-F]{1,4})?$|^([\da-fA-F]{1,4}:){6}:$/', $Ip)) {
         $Provider = $Options['Provider_V6'];
     };
-    if (!in_array($Provider, ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips', 'UaInfo'])) {
+    if (!in_array($Provider, ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips', 'Dashi'])) {
         return '未知 未知';
     }
 
     $Location = [''] * 6;
-    if ($Provider == 'Bt')     $Location = __QueryIpLocation_Bt    ($Ip, $Options);
-    if ($Provider == 'Zx')     $Location = __QueryIpLocation_Zx    ($Ip, $Options);
-    if ($Provider == 'Ldd')    $Location = __QueryIpLocation_Ldd   ($Ip, $Options);
-    if ($Provider == 'Ipa')    $Location = __QueryIpLocation_Ipa   ($Ip, $Options);
-    if ($Provider == 'Ips')    $Location = __QueryIpLocation_Ips   ($Ip, $Options);
-    if ($Provider == 'UaInfo') $Location = __QueryIpLocation_UaInfo($Ip, $Options);
+    if ($Provider == 'Bt')    $Location = __QueryIpLocation_Bt   ($Ip, $Options);
+    if ($Provider == 'Zx')    $Location = __QueryIpLocation_Zx   ($Ip, $Options);
+    if ($Provider == 'Ldd')   $Location = __QueryIpLocation_Ldd  ($Ip, $Options);
+    if ($Provider == 'Ipa')   $Location = __QueryIpLocation_Ipa  ($Ip, $Options);
+    if ($Provider == 'Ips')   $Location = __QueryIpLocation_Ips  ($Ip, $Options);
+    if ($Provider == 'Dashi') $Location = __QueryIpLocation_Dashi($Ip, $Options);
     if ($Location == [''] * 6) return '未知 未知';
 
     $Location = array_map(function($_) { return strval('' === $_ ? '' : $_); }, $Location);
@@ -161,16 +168,26 @@ function QueryIpLocation(string $Ip, array $Options = null): string {
         if (strpos($___Provider, '移动') !== false || strpos($___Provider, 'MOBILE' ) !== false || strpos($___Provider, 'CMNET'    ) !== false) $Location[5] = '移动';
         if (strpos($___Provider, '铁通') !== false || strpos($___Provider, 'TIETONG') !== false || strpos($___Provider, 'RAILWAT'  ) !== false) $Location[5] = '铁通';
         if (strpos($___Provider, '教育') !== false || strpos($___Provider, 'CERNET' ) !== false || strpos($___Provider, 'EDUCATION') !== false) $Location[5] = '教育网';
+        if (strpos($___Provider, '阿里') !== false || strpos($___Provider, 'ALIBABA') !== false || strpos($___Provider, 'ALIYUN') !== false || strpos($___Provider, 'TAOBAO') !== false) $Location[5] = '阿里云';
+        if (strpos($___Provider, '腾讯') !== false || strpos($___Provider, 'TENCENT') !== false || strpos($___Provider, 'QQ'    ) !== false || strpos($___Provider, 'WECHAT') !== false) $Location[5] = '腾讯云';
+    } else {
+        // 区县和城市重复时, 区县置空
+        if ($Location[3] == $Location[2]) $Location[3] = '';
+        // 城市和省份重复时, 城市置空
+        if ($Location[2] == $Location[1]) $Location[2] = '';
+        // 省份和国家重复时, 省份置空
+        if ($Location[1] == $Location[0]) $Location[1] = '';
     }
 
-    return trim(preg_replace('/\s+/', ' ', implode(' ', $Location)));
+    return preg_replace('/\s+/', ' ', implode(' ', $Location))->replace('CZ88.NET', '')->trim();
 }
 
 function __QueryIpLocation_Bt(string $Ip, array $Options): array {
     try {
         $Url = substr(base64_decode('LWh0dHBzOi8vd3d3LmJ0LmNuL2FwaS9wYW5lbC9nZXRfaXBfaW5mbz9pcD0='), 1) . $Ip;
         $Hed = [
-            'User-Agent' => 'BT-Panel'
+            'User-Agent'      => 'BT-Panel',
+            'X-Forwarded-For' => $Ip
         ];
         $Rsp = json_decode(file_get_contents($Url, false, stream_context_create([
             'http' => [
@@ -197,6 +214,7 @@ function __QueryIpLocation_Zx(string $Ip, array $Options): array {
             'Priority'         => 'u=1, i',
             'Referer'          => substr(base64_decode('LWh0dHBzOi8vaXAuenhpbmMub3JnL2lwcXVlcnkv'), 1),
             'User-Agent'       => $Options['User-Agent'],
+            'X-Forwarded-For'  => $Ip,
             'X-Requested-With' => 'XMLHttpRequest'
         ];
         $Rsp = json_decode(file_get_contents($Url, false, stream_context_create([
@@ -228,7 +246,8 @@ function __QueryIpLocation_Ldd(string $Ip, array $Options): array {
             'Sec-Fetch-Dest'  => 'empty',
             'Sec-Fetch-Mode'  => 'cors',
             'Sec-Fetch-Site'  => 'same-site',
-            'User-Agent'      => $Options['User-Agent']
+            'User-Agent'      => $Options['User-Agent'],
+            'X-Forwarded-For' => $Ip
         ];
         $Dat = [
             'ip' => $Ip
@@ -263,7 +282,8 @@ function __QueryIpLocation_Ipa(string $Ip, array $Options): array {
             'Sec-Fetch-Dest'  => 'empty',
             'Sec-Fetch-Mode'  => 'cors',
             'Sec-Fetch-Site'  => 'same-site',
-            'User-Agent'      => $Options['User-Agent']
+            'User-Agent'      => $Options['User-Agent'],
+            'X-Forwarded-For' => $Ip
         ];
         $Rsp = json_decode(file_get_contents($Url, false, stream_context_create([
             'http' => [
@@ -282,18 +302,19 @@ function __QueryIpLocation_Ips(string $Ip, array $Options): array {
     try {
         $Url = substr(base64_decode('LWh0dHBzOi8vd3d3Lmlwc2h1ZGkuY29tLw=='), 1) . $Ip . substr(base64_decode('LS5odG0='.encode()), 1);
         $Hed = [
-            'Accept'                   => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Language'          => 'zh-CN,zh;q=0.9',
-            'Cache-Control'            => 'no-cache',
-            'Connection'               => 'keep-alive',
-            'DNT'                      => '1',
-            'Pragma'                   => 'no-cache',
-            'Sec-Fetch-Dest'           => 'document',
-            'Sec-Fetch-Mode'           => 'navigate',
-            'Sec-Fetch-Site'           => 'none',
-            'Sec-Fetch-User'           => '?1',
-            'Upgrade-Insecure-Requests'=> '1',
-            'User-Agent'               => $Options['User-Agent']
+            'Accept'                    => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language'           => 'zh-CN,zh;q=0.9',
+            'Cache-Control'             => 'no-cache',
+            'Connection'                => 'keep-alive',
+            'DNT'                       => '1',
+            'Pragma'                    => 'no-cache',
+            'Sec-Fetch-Dest'            => 'document',
+            'Sec-Fetch-Mode'            => 'navigate',
+            'Sec-Fetch-Site'            => 'none',
+            'Sec-Fetch-User'            => '?1',
+            'Upgrade-Insecure-Requests' => '1',
+            'User-Agent'                => $Options['User-Agent'],
+            'X-Forwarded-For'           => $Ip
         ];
         $Rsp = file_get_contents($Url, false, stream_context_create([
             'http' => [
@@ -313,20 +334,33 @@ function __QueryIpLocation_Ips(string $Ip, array $Options): array {
     }
 }
 
-function __QueryIpLocation_UaInfo(string $Ip, array $Options): array {
+function __QueryIpLocation_Dashi(string $Ip, array $Options): array {
     try {
-        $Url = substr(base64_decode('LWh0dHBzOi8vaXAudXNlcmFnZW50aW5mby5jb20vanNvbnA/aXA9'), 1) . $Ip;
+     // $Url = substr(base64_decode('LWh0dHBzOi8vbWFpbC4xNjMuY29tL2Zndy9tYWlsc3J2LWlwZGV0YWlsL2RldGFpbA=='), 1) . $Ip;
+        $Url = substr(base64_decode('LWh0dHBzOi8vZGFzaGkuMTYzLmNvbS9mZ3cvbWFpbHNydi1pcGRldGFpbC9kZXRhaWw='), 1) . $Ip;
         $Hed = [
-            'User-Agent' => $Options['User-Agent']
+            'Accept'                    => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language'           => 'zh-CN,zh;q=0.9',
+            'Cache-Control'             => 'no-cache',
+            'Connection'                => 'keep-alive',
+            'DNT'                       => '1',
+            'Pragma'                    => 'no-cache',
+            'Sec-Fetch-Dest'            => 'document',
+            'Sec-Fetch-Mode'            => 'navigate',
+            'Sec-Fetch-Site'            => 'none',
+            'Sec-Fetch-User'            => '?1',
+            'Upgrade-Insecure-Requests' => '1',
+            'User-Agent'                => $Options['User-Agent'],
+            'X-Forwarded-For'           => $Ip
         ];
-        $Rsp = json_decode(rtrim(ltrim(file_get_contents($Url, false, stream_context_create([
+        $Rsp = file_get_contents($Url, false, stream_context_create([
             'http' => [
                 'header'  => implode("\r\n", array_map(function($k, $v) { return "$k: $v"; }, array_keys($Hed), $Hed)),
                 'timeout' => $Options['Timeout']
             ]
-        ])), 'callback('), ');'), true);
+        ]));
 
-        return [$Rsp['country'], $Rsp['province'], $Rsp['city'], $Rsp['area'], '', $Rsp['isp']];
+        return [str_replace('UNKNOWN', '', $Rsp['country']), str_replace('UNKNOWN', '', $Rsp['province']), str_replace('UNKNOWN', '', $Rsp['city']), '', '', $Rsp['country'] === '中国' ? str_replace('UNKNOWN', '', $Rsp['isp'] . $Rsp['org']) : str_replace('UNKNOWN', '', $Rsp['isp'])];
     } catch (Exception $Error) {
         return [''] * 6;
     }

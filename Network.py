@@ -81,6 +81,13 @@ def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | dict
 def QueryIpLocation(Ip: str, Options: dict = None) -> str:
     '''
     Query the Location of an IP Address.
+    
+    Bt   : IPv4 (国内 区县级, 国外 国家级)
+    Zx   : IPv4 (国内 城市级, 国外 国家级), IPv6 (国内 城市级, 国外 省份级)
+    Ldd  : IPv4 (国内 区县级, 国外 城市级), IPv6 (国内 城市级, 国外 省份级)
+    Ipa  : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
+    Ips  : IPv4 (国内 区县级, 国外 城市级), IPv6 (国内 省份级, 国外 省份级)
+    Dashi: IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
     '''
     import re
 
@@ -90,8 +97,8 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
 
     DftOpts = {
         'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
-        'Provider_V4': 'Bt',  # Bt, Zx, Ldd, Ipa, Ips, Dashi, Cz88 (TBA)
-        'Provider_V6': 'Zx',  # Zx, Ips, Dashi, Cz88 (TBA)
+        'Provider_V4': 'Bt',     # Bt, Zx, Ldd, Ipa, Ips, Dashi, Cz88 (TBA)
+        'Provider_V6': 'Dashi',  # Zx, Ips, Dashi, Cz88 (TBA)
         'Timeout'    : 5
     }
     Options = MergeDictionaries(DftOpts, Options)
@@ -131,8 +138,15 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
         if any([_ in Location[5].upper() for _ in ['教育', 'CERNET' , 'EDUCATION'       ]]): Location[5] = '教育网'
         if any([_ in Location[5].upper() for _ in ['阿里', 'ALIBABA', 'ALIYUN', 'TAOBAO']]): Location[5] = '阿里云'
         if any([_ in Location[5].upper() for _ in ['腾讯', 'TENCENT', 'QQ'    , 'WECHAT']]): Location[5] = '腾讯云'
+    else:
+        # 区县和城市重复时, 区县置空
+        if Location[3] == Location[2]: Location[3] = ''
+        # 城市和省份重复时, 城市置空
+        if Location[2] == Location[1]: Location[2] = ''
+        # 省份和国家重复时, 省份置空
+        if Location[1] == Location[0]: Location[1] = ''
 
-    return re.sub(r'\s+', ' ', ' '.join(Location)).strip()
+    return re.sub(r'\s+', ' ', ' '.join(Location).replace('CZ88.NET', '')).strip()
 
 
 def __QueryIpLocation_Bt(Ip: str, Options: dict) -> list:
