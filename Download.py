@@ -47,19 +47,20 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
                             verify  = Options['Verify'],
                             allow_redirects = Options['AllowRedirects'])
 
-        Rsp = requests.get(Url,
+        Rsp = requests.get( Url,
                             headers = Options['Header'],
                             params  = Options['Params'],
                             cookies = Options['Cookie'],
                             timeout = Options['Timeout'],
                             verify  = Options['Verify'],
-                            allow_redirects = Options['AllowRedirects']) if Rsp.status_code == 405 else Rsp
+                            stream  = True,
+                            allow_redirects = Options['AllowRedirects']) if not Rsp.ok else Rsp
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         Response['Code']             = Rsp.status_code
-        Response['Location']         = Rsp.url if Options['AllowRedirects'] else Rsp.headers.get('Location', '')
+        Response['Location']         = Rsp.headers.get('Location', '') or Rsp.url
         Response['Content-Type']     = Rsp.headers.get('Content-Type', '')
         Response['Content-Length']   = int(Rsp.headers.get('Content-Length', -1))
         Response['Last-Modified-At'] = int(time.mktime(time.strptime(Rsp.headers.get('Last-Modified', ''), '%a, %d %b %Y %H:%M:%S %Z'))) if 'Last-Modified' in Rsp.headers else -1
@@ -116,6 +117,7 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
         if Head['Ec']          != 0: raise Exception(Head['Em'])
         if Head['Code'] // 100 != 2: raise Exception(f'HTTP Code is {Head["Code"]}')
 
+        Url  = Response['Location']
         Tool = 'Requests' if Head['Content-Length'] <= Options['DownloadKit.Block'] else 'DownloadKit'
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
@@ -138,8 +140,8 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
         else:
             Download = __GetFileViaDownloadKit(Url, Path, Options)
 
-        if Download['Ec']   != 0                     : raise Exception(Download['Em'])
-        if Download['Size'] != Head['Content-Length']: raise Exception(f'File Size is {Download["Size"]}, Content-Length is {Head["Content-Length"]}')
+        if Download['Ec']         !=  0                                               : raise Exception(Download['Em'])
+        if Head['Content-Length'] != -1 and Download['Size'] != Head['Content-Length']: raise Exception(f'File Size is {Download["Size"]}, Content-Length is {Head["Content-Length"]}')
 
         Response['Size'] = Download['Size']
     except Exception as Error:
@@ -290,7 +292,7 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
         if Tsk.result == 'success':
             Kit = None
 
-            if Tsk.info != Path:
+            if os.path.abspath(Tsk.info) != os.path.abspath(Path):
                 if os.path.exists(Path):
                     os.remove(Path)
                 os.rename(Tsk.info, Path)
@@ -307,7 +309,6 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
 
     try:
         Response['Size'] = os.path.getsize(Path)
-        print('Size:', Response['Size'])
     except Exception as Error:
         Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
 
