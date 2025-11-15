@@ -39,22 +39,25 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        Rsp = requests.head(Url,
-                            headers = Options['Header'],
-                            params  = Options['Params'],
-                            cookies = Options['Cookie'],
-                            timeout = Options['Timeout'],
-                            verify  = Options['Verify'],
-                            allow_redirects = Options['AllowRedirects'])
+        Rsp = requests.head(   Url,
+                               headers = Options['Header'],
+                               params  = Options['Params'],
+                               cookies = Options['Cookie'],
+                               timeout = Options['Timeout'],
+                               verify  = Options['Verify'],
+                               allow_redirects = Options['AllowRedirects'])
 
-        Rsp = requests.get( Url,
-                            headers = Options['Header'],
-                            params  = Options['Params'],
-                            cookies = Options['Cookie'],
-                            timeout = Options['Timeout'],
-                            verify  = Options['Verify'],
-                            stream  = True,
-                            allow_redirects = Options['AllowRedirects']) if not Rsp.ok else Rsp
+        if not Rsp.ok:
+            Rsp = requests.get(Url,
+                               headers = Options['Header'],
+                               params  = Options['Params'],
+                               cookies = Options['Cookie'],
+                               timeout = Options['Timeout'],
+                               verify  = Options['Verify'],
+                               stream  = True,
+                               allow_redirects = Options['AllowRedirects'])
+            try: Rsp.close()
+            except: pass
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
@@ -117,16 +120,15 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
         if Head['Ec']          != 0: raise Exception(Head['Em'])
         if Head['Code'] // 100 != 2: raise Exception(f'HTTP Code is {Head["Code"]}')
 
-        Url  = Response['Location']
         Tool = 'Requests' if Head['Content-Length'] <= Options['DownloadKit.Block'] else 'DownloadKit'
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        if os.path.isabs(Path):
+        if not os.path.isabs(Path):
             Path = os.path.abspath(Path)
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         if os.path.dirname(Path):
@@ -136,15 +138,17 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
 
     try:
         if Tool == 'Requests':
-            Download = __GetFileViaRequests(Url, Path, Options)
+            Download = __GetFileViaRequests(Response['Location'], Path, Options)
         else:
-            Download = __GetFileViaDownloadKit(Url, Path, Options)
+            Download = __GetFileViaDownloadKit(Response['Location'], Path, Options)
 
         if Download['Ec']         !=  0                                               : raise Exception(Download['Em'])
         if Head['Content-Length'] != -1 and Download['Size'] != Head['Content-Length']: raise Exception(f'File Size is {Download["Size"]}, Content-Length is {Head["Content-Length"]}')
 
         Response['Size'] = Download['Size']
     except Exception as Error:
+        try: os.remove(Path)
+        except: pass
         Response['Ec'] = 50004; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
@@ -153,6 +157,8 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
         elif Head['Last-Modified-At'] > 0:
             os.utime(Path, (int(Head['Last-Modified-At']), int(Head['Last-Modified-At'])))
     except Exception as Error:
+        try: os.remove(Path)
+        except: pass
         Response['Ec'] = 50005; Response['Em'] = MakeErrorMessage(Error); return Response
 
     return Response
@@ -266,9 +272,8 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
 
             while Tsk.rate == None or Tsk.rate == 0.0:
                 if Timer >= 10:
-                    if Tsk.rate == None or Tsk.rate == 0.0:
-                        Tsk.cancel()
-                        raise Exception('Connecting Timeout')
+                    Tsk.cancel()
+                    raise Exception('Connecting Timeout')
                 Timer += 1
                 time.sleep(1)
 
@@ -277,14 +282,13 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
                 if Tsk.is_done:
                     break
                 else:
-                    time.sleep(0.025)
+                    time.sleep(0.1)
 
         else:
             while Tsk.rate == None or Tsk.rate == 0.0:
                 if Timer >= 10:
-                    if Tsk.rate == None or Tsk.rate == 0.0:
-                        Tsk.cancel()
-                        raise Exception('Connecting Timeout')
+                    Tsk.cancel()
+                    raise Exception('Connecting Timeout')
                 Timer += 1
                 time.sleep(1)
             Tsk.wait(show = False)
@@ -292,10 +296,13 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
         if Tsk.result == 'success':
             Kit = None
 
-            if os.path.abspath(Tsk.info) != os.path.abspath(Path):
-                if os.path.exists(Path):
-                    os.remove(Path)
-                os.rename(Tsk.info, Path)
+            if Tsk.info != Path:
+                try:
+                    os.replace(Tsk.info, Path)
+                except:
+                    if os.path.exists(Path):
+                        os.remove(Path)
+                    os.rename(Tsk.info, Path)
 
             Response['Size'] = os.path.getsize(Path)
         else:
