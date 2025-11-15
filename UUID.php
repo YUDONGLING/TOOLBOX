@@ -102,7 +102,16 @@ function TimeUUID_Decode(string $UUID, string $Separator = null): array {
     try {
         if ($Separator === null) {
             $Separator_Len = (strlen($UUID) - 32) / 4;
-            $Separator     = $Separator_Len > 0 ? substr($UUID, 8, $Separator_Len) : "";
+            if ($Separator_Len > 0) {
+                $Sep_Candidate = substr($UUID, 8, $Separator_Len);
+                if (substr_count($UUID, $Sep_Candidate) >= 4) {
+                    $Separator = $Sep_Candidate;
+                } else {
+                    $Separator = "";
+                }
+            } else {
+                $Separator = "";
+            }
         }
     } catch (Exception $Error) {
         $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error); return $Response;
