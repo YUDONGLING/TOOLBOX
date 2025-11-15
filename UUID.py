@@ -28,7 +28,7 @@ def TimeUUID(Time: int = None, Seed: tuple[int, int] = None, Separator: str = '-
     return Separator.join([Hexa[:8], Hexa[8:12], Hexa[12:16], Hexa[16:20], Hexa[20:]])
 
 
-def TimeUUID_Sort(Path: str, Seperator: str = None) -> dict:
+def TimeUUID_Sort(Path: str, Separator: str = None) -> dict:
     '''
     Sort Files in a Directory by TimeUUID.
     '''
@@ -50,7 +50,7 @@ def TimeUUID_Sort(Path: str, Seperator: str = None) -> dict:
     try:
         Metas = []
         for File in Files:
-            _ = TimeUUID_Decode(File, Seperator)
+            _ = TimeUUID_Decode(File, Separator)
             if _['Ec'] == 0: Metas.append({'Time': _['Time'], 'Name': File, 'Path': os.path.join(Path, File)})
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
@@ -63,7 +63,7 @@ def TimeUUID_Sort(Path: str, Seperator: str = None) -> dict:
     return Response
 
 
-def TimeUUID_Decode(UUID: str, Seperator: str = None) -> dict:
+def TimeUUID_Decode(UUID: str, Separator: str = None) -> dict:
     '''
     Decode a UUID-like String to a Timestamp.
     '''
@@ -76,14 +76,18 @@ def TimeUUID_Decode(UUID: str, Seperator: str = None) -> dict:
     }
 
     try:
-        if Seperator is None:
-            Seperator_Len = (len(UUID) - 32) // 4
-            Seperator     = UUID[8: 8 + Seperator_Len] if Seperator_Len > 0 else ''
+        if Separator is None:
+            Separator_Len = (len(UUID) - 32) // 4
+            if Separator_Len > 0:
+                _ = UUID[8: 8 + Separator_Len]
+                Separator = _ if UUID.count(_) >= 4 else ''
+            else:
+                Separator = ''
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        UUID = UUID.replace(Seperator, '')
+        UUID = UUID.replace(Separator, '')
         Seed = (int(UUID[-2], 16), int(UUID[-1], 16))
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
