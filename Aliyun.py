@@ -123,8 +123,8 @@ def __EndPoint(Product: str = None, Region: str = None, Options: dict = None) ->
         if Region in ['cn-qingdao', 'cn-beijing', 'cn-zhangjiakou', 'cn-huhehaote', 'cn-hangzhou', 'cn-shanghai', 'cn-shenzhen', 'ap-northeast-2', 'ap-southeast-3', 'ap-northeast-1', 'ap-southeast-7', 'cn-chengdu', 'ap-southeast-1', 'ap-southeast-5', 'cn-hongkong', 'eu-central-1', 'us-east-1', 'us-west-1', 'eu-west-1']:
             return 'fc.{Region}.aliyuncs.com'.format(Region = Region)
         if Region in ['cn-hangzhou-finance']:
-            if not 'Fc.AccountId' in Options: raise Exception('Require AccountId')
-            return '{AccountId}.{Region}.fc.aliyuncs.com'.format(AccountId = Options.get('Fc.AccountId'), Region = Region)
+            if not Options.get('Fc.AccountId'): raise Exception('Require AccountId')
+            return '{AccountId}.{Region}.fc.aliyuncs.com'.format(AccountId = Options['Fc.AccountId'], Region = Region)
         raise Exception('Invalid Region')
 
     # 函数计算 3.0 Function Compute 3.0
