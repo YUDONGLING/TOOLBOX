@@ -1,4 +1,4 @@
-def MakeLog(Content: str, Path: str = 'Log/{{YYYY}}-{{MM}}-{{DD}}.txt') -> None:
+def MakeLog(Content: str, Path: str = 'Log/{{YYYY}}-{{MM}}-{{DD}}.txt') -> dict:
     '''
     Make Log File with Content, Support Magic Variables for Path. \n
 
@@ -15,15 +15,17 @@ def MakeLog(Content: str, Path: str = 'Log/{{YYYY}}-{{MM}}-{{DD}}.txt') -> None:
         'Ec': 0, 'Em': '', 'Path': ''
     }
 
-    Path = Path.replace('{{YYYY}}', time.strftime('%Y', time.localtime())) # 年　, Eg: 2021
-    Path = Path.replace('{{YY}}'  , time.strftime('%y', time.localtime())) # 年　, Eg: 21
-    Path = Path.replace('{{MM}}'  , time.strftime('%m', time.localtime())) # 月　, Eg: 01
-    Path = Path.replace('{{DD}}'  , time.strftime('%d', time.localtime())) # 日　, Eg: 01
-    Path = Path.replace('{{HH}}'  , time.strftime('%H', time.localtime())) # 时　, Eg: 00
-    Path = Path.replace('{{MI}}'  , time.strftime('%M', time.localtime())) # 分　, Eg: 00
-    Path = Path.replace('{{SS}}'  , time.strftime('%S', time.localtime())) # 秒　, Eg: 00
-    Path = Path.replace('{{TZ}}'  , time.strftime('%z', time.localtime())) # 时区, Eg: +0800
-    Path = Path.replace('{{TZS}}' , time.strftime('%Z', time.localtime())) # 时区, Eg: CST
+    TimeConst = time.localtime()
+
+    Path = Path.replace('{{YYYY}}', time.strftime('%Y', TimeConst)) # 年　, Eg: 2021
+    Path = Path.replace('{{YY}}'  , time.strftime('%y', TimeConst)) # 年　, Eg: 21
+    Path = Path.replace('{{MM}}'  , time.strftime('%m', TimeConst)) # 月　, Eg: 01
+    Path = Path.replace('{{DD}}'  , time.strftime('%d', TimeConst)) # 日　, Eg: 01
+    Path = Path.replace('{{HH}}'  , time.strftime('%H', TimeConst)) # 时　, Eg: 00
+    Path = Path.replace('{{MI}}'  , time.strftime('%M', TimeConst)) # 分　, Eg: 00
+    Path = Path.replace('{{SS}}'  , time.strftime('%S', TimeConst)) # 秒　, Eg: 00
+    Path = Path.replace('{{TZ}}'  , time.strftime('%z', TimeConst)) # 时区, Eg: +0800
+    Path = Path.replace('{{TZS}}' , time.strftime('%Z', TimeConst)) # 时区, Eg: CST
 
     try:
         if os.path.dirname(Path):
@@ -32,8 +34,8 @@ def MakeLog(Content: str, Path: str = 'Log/{{YYYY}}-{{MM}}-{{DD}}.txt') -> None:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        with portalocker.Lock(Path, 'a') as File:
-            File.write('[%s] %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), Content))
+        with portalocker.Lock(Path, 'a', encoding = 'utf-8') as File:
+            File.write('[%s] %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S', TimeConst), Content))
         Response['Path'] = Path
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
@@ -60,7 +62,7 @@ def MakeErrorMessage(Error: Exception) -> str:
         Func = 'N/A'
         Line = 'N/A'
 
-    if hasattr(Error, '__class__') and hasattr(Error.__class__, '__name__') and Error.__class__.__name__:
+    if hasattr(Error.__class__, '__name__') and Error.__class__.__name__:
         Type = Error.__class__.__name__
     else:
         Type = 'Error'
