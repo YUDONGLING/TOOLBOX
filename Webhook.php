@@ -6,32 +6,34 @@ require_once "Log.php";
 /**
  * Send Message to Lark Chat Group.
  */
-function Lark(string $Token, string $Topic = "", array $Message = []): array {
+function Lark(string $Token, string $Topic = "", array $Message = null): array {
     throw new Exception("Not Implemented");
 }
 
 /**
  * Send Message to Slack Chat Group.
  */
-function Slack(string $Token, string $Topic = "", array $Message = []): array {
+function Slack(string $Token, string $Topic = "", array $Message = null): array {
     throw new Exception("Not Implemented");
 }
 
 /**
  * Send Message to Enterprise WeChat Chat Group. `Token` Should Likes `{{ACCESS_TOKEN}}|{{CHAT_ID}}`.
  */
-function WeChat(string $Token, string $Topic = "", array $Message = []): array {
+function WeChat(string $Token, string $Topic = "", array $Message = null): array {
     throw new Exception("Not Implemented");
 }
 
 /**
  * Send Message to DingTalk Chat Group.
  */
-function DingTalk(string $Token, string $Topic = "", array $Message = []): array {
+function DingTalk(string $Token, string $Topic = "", array $Message = null): array {
     $Response = [
         "Ec" => 0,
         "Em" => ""
     ];
+
+    if ($Message === null) { $Message = []; }
 
     try {
         $MessageBody = "<font color=#6A65FF>**" . $Topic . "**</font> \n\n " . date("Y-m-d H:i:s") . " \n\n";
@@ -40,7 +42,7 @@ function DingTalk(string $Token, string $Topic = "", array $Message = []): array
             if (empty($Item["Title"])) {
                 $MessageBody .= " --- \n\n ";
             } else {
-                $Color = strtoupper($Item["Color"] ?? "UNKNOW");
+                $Color = strtoupper($Item["Color"] ?? "UNKNOWN");
                 if (strpos($Color, "#") !== 0 || strlen($Color) != 7) {
                     $Color = [
                         "PURPLE" => "#6A65FF",
@@ -60,7 +62,7 @@ function DingTalk(string $Token, string $Topic = "", array $Message = []): array
     }
 
     try {
-        $Url = "https://oapi.dingtalk.com/robot/send?access_token=" . str_replace("https://oapi.dingtalk.com/robot/send?access_token=", "", $Token);
+        $Url = "https://oapi.dingtalk.com/robot/send?access_token=" . str_replace("https://oapi.dingtalk.com/robot/send?access_token=", "", str_replace("http://oapi.dingtalk.com/robot/send?access_token=", "", $Token));
         $Dat = [
             "msgtype"   => "markdown",
             "markdown"  => [
@@ -77,8 +79,8 @@ function DingTalk(string $Token, string $Topic = "", array $Message = []): array
             ]
         ])), true);
 
-        if ($Rsp["errcode"] != 0) {
-            throw new Exception($Rsp["errcode"] . "-" . $Rsp["errmsg"]);
+        if (($Rsp["errcode"] ?? -1) !== 0) {
+            throw new Exception(($Rsp["errcode"] ?? "Unknown") . "-" . ($Rsp["errmsg"] ?? "Unknown"));
         }
     } catch (Exception $Error) {
         $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error); return $Response;
@@ -90,14 +92,14 @@ function DingTalk(string $Token, string $Topic = "", array $Message = []): array
 /**
  * Send Message via Telegram Bot.
  */
-function Telegram(string $Token, string $Topic = "", array $Message = []): array {
+function Telegram(string $Token, string $Topic = "", array $Message = null): array {
     throw new Exception("Not Implemented");
 }
 
 /**
  * Send Message via SeverChan.
  */
-function SeverChan(string $Token, string $Topic = "", array $Message = []): array {
+function SeverChan(string $Token, string $Topic = "", array $Message = null): array {
     throw new Exception("Not Implemented");
 }
 
