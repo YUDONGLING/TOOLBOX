@@ -48,14 +48,16 @@ class PostmanRequest(object):
             raise requests.exceptions.HTTPError('Error: %s, %s' % (Response.status_code, Response.text))
 
         # Target Server Side Error
-        if Response.json().get('Ec'.lower()) or not Response.json().get('Data'.lower()):
-            Et, Em = Response.json().get('Em'.lower()).split(': ', 1) if ': ' in Response.json().get('Em'.lower()) else ('', Response.json().get('Em'.lower()))
+        ResponseJson = Response.json()
+        if ResponseJson.get('Ec'.lower()) or not ResponseJson.get('Data'.lower()):
+            ResponseEm = ResponseJson.get('Em'.lower()) or ''
+            Et, Em = ResponseEm.split(': ', 1) if ': ' in ResponseEm else ('', ResponseEm)
             match Et:
                 case 'ValueError': raise ValueError('TargetServer %s@%s' % (Et, Em))
                 case 'TypeError' : raise TypeError ('TargetServer %s@%s' % (Et, Em))
                 case _           : raise Exception ('TargetServer %s@%s' % (Et, Em))
 
-        return PostmanResponse(self, Response.json().get('Data'.lower()))
+        return PostmanResponse(self, ResponseJson.get('Data'.lower()))
 
     def get(self, url, params = None, data = None, headers = None, cookies = None, auth = None, timeout = None, allow_redirects = True, proxies = None, stream = None, verify = None, cert = None):
         return self.request('GET', url, params, data, headers, cookies, auth, timeout, allow_redirects, proxies, stream, verify, cert)
