@@ -1,6 +1,6 @@
-def CreateBrowse(Private: bool = True, Options: dict = None) -> dict:
+def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
     '''
-    Create a Browse.
+    Create a Browser.
     '''
     import selenium.webdriver
 
@@ -9,9 +9,9 @@ def CreateBrowse(Private: bool = True, Options: dict = None) -> dict:
     else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
-        'DriverPath'   : r'H:\GITHUB\TOOLBOX\EdgeDriver\msedgedriver.exe',
-        'UserDataPath' : r'H:\GITHUB\TOOLBOX\EdgeDriver\UserData',
-        'AntiRobotPath': r'H:\GITHUB\TOOLBOX\EdgeStealth.min.js'
+        'DriverPath'   : r'G:\TOOLBOX\EdgeDriver\msedgedriver.exe',
+        'UserDataPath' : r'G:\TOOLBOX\EdgeDriver\UserData',
+        'AntiRobotPath': r'G:\TOOLBOX\EdgeStealth.min.js'
     }
     Options = MergeDictionaries(DftOpts, Options)
 
@@ -38,8 +38,6 @@ def CreateBrowse(Private: bool = True, Options: dict = None) -> dict:
         EdgeOptions.add_experimental_option('excludeSwitches', ['enable-automation'])
         EdgeOptions.add_experimental_option('useAutomationExtension', False)
         EdgeOptions.add_experimental_option('excludeSwitches', ['enable-logging'])
-
-        EdgeOptions.add_argument("--disable-blink-features")
         EdgeOptions.add_argument("--disable-blink-features=AutomationControlled")
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
@@ -55,9 +53,9 @@ def CreateBrowse(Private: bool = True, Options: dict = None) -> dict:
     return Response
 
 
-def CloseBrowse(Driver: object) -> dict:
+def CloseBrowser(Driver: object) -> dict:
     '''
-    Close the Browse (Force Quit).
+    Close the Browser (Force Quit).
     '''
     if not __package__:
           from  Log import MakeErrorMessage
@@ -125,4 +123,4 @@ def OpenBlank(Driver: object) -> dict:
     '''
     Open a Blank Page.
     '''
-    return OpenUrl(Driver, Url = 'edge://newtab', Options = {'Timeout': 0})
+    return OpenUrl(Driver, Url = 'edge://newtab', Options = {'Timeout': 1})
