@@ -21,7 +21,9 @@ def SafePath(Path: str, Options: dict = None) -> dict:
 
     try:
         for Rule in Options['ForceReplace']:
-            if len(Rule) == 2: Path = Path.replace(Rule[0], Rule[1])
+            if isinstance(Rule, (list, tuple)) and len(Rule) == 2:
+                if isinstance(Rule[0], str) and isinstance(Rule[1], str):
+                    Path = Path.replace(Rule[0], Rule[1])
         Response['Path'] = re.sub(r'\s+', ' ', re.sub(r'[\\/:*?\"<>|\n]', ' ', Path)).lstrip()[:Options['MaxLength']].rstrip()
     except Exception as Error:
         Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
@@ -53,13 +55,14 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
         'Result': ''
     }
 
-    Units   = ['B',     'KB',     'MB',     'GB',     'TB',     'PB'    ]
-    Weights = {'B':  0, 'KB':  1, 'MB':  2, 'GB':  3, 'TB':  4, 'PB':  5}
-    Sizes   = {'B': -1, 'KB': -1, 'MB': -1, 'GB': -1, 'TB': -1, 'PB': -1}
+    Units   = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    Weights = { Name: Index for Index, Name in enumerate(Units)}
+    Sizes   = { Name: -1    for        Name in           Units }
 
     try:
-        if Size < 0          : raise ValueError('Size Must be Positive')
-        if not Unit in Units : raise ValueError('Unit Must in B, KB, MB, GB, TB or PB')
+        if not isinstance(Size, (int, float)): raise TypeError ('Size Must be Int or Float')
+        if Size < 0                          : raise ValueError('Size Must be Positive')
+        if not Unit in Units                 : raise ValueError('Unit Must in B, KB, MB, GB, TB or PB')
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
@@ -69,7 +72,8 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
         for Unit in Units:
             Sizes[Unit] = SizeInBytes / (1024 ** Weights[Unit])
 
-        AutoUnit = [Unit for Unit in Units if Sizes[Unit] >= 1][-1]
+        AutoUnit = [Unit for Unit in Units[1:] if Sizes[Unit] >= 1]
+        AutoUnit = AutoUnit[-1] if AutoUnit else 'B'
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
