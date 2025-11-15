@@ -91,8 +91,8 @@ def __Sign(AK: str, SK: str, Region: str, Bucket: str, Method: str, Url: str, ST
         else:        return f'/{Key_And_Query}{"&" if "?" in Key_And_Query else "?"}OSSAccessKeyId={AK}&Expires={Expires}&Signature={Signature}'
 
     else:
-        if not Expires or not isinstance(Expires, int): Expires = int(time.time() + 3600)
-        elif Expires < time.time(): Expires = int(time.time() + Expires)
+        if not Expires or not isinstance(Expires, int): Expires = 3600
+        elif Expires > 604800: Expires = 604800
 
         CurrentTime = time.gmtime()
         Url, Query  = Key_And_Query.split('?') if '?' in Key_And_Query else (Key_And_Query, '')
@@ -200,7 +200,7 @@ def SignUrl(Method: str, Key: str, Header: dict = None, Param: dict = None, Expi
     return Response
 
 
-def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict = None, Param: dict = None, ProgressCallback: object = None, Options: dict = None) -> dict:
+def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict = None, Param: dict = None, ProgressCallback: callable = None, Options: dict = None) -> dict:
     '''
     Get Object from OSS Bucket.
     '''
@@ -298,7 +298,7 @@ def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict =
     return Response
 
 
-def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = None, ProgressCallback: object = None, Options: dict = None) -> dict:
+def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = None, ProgressCallback: callable = None, Options: dict = None) -> dict:
     '''
     Resumable Get Object from OSS Bucket (Multipart Download).
     '''
@@ -370,7 +370,7 @@ def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = N
     return Response
 
 
-def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = None, Header: dict = None, ProgressCallback: object = None, Options: dict = None) -> dict:
+def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = None, Header: dict = None, ProgressCallback: callable = None, Options: dict = None) -> dict:
     '''
     Put Object to OSS Bucket.
     '''
@@ -460,7 +460,7 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
     return Response
 
 
-def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback = None, Options: dict = None) -> dict:
+def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: callable = None, Options: dict = None) -> dict:
     '''
     Form Put Object to OSS Bucket. \n
     Hint! Only Support to use Signed Policy and Generate Signature is NOT Available.
@@ -548,7 +548,7 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback = N
     return Response
 
 
-def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: object = None, Options: dict = None) -> dict:
+def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: callable = None, Options: dict = None) -> dict:
     '''
     Resumable Put Object to OSS Bucket. (Multipart Upload)
     '''
@@ -614,7 +614,7 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
     return Response
 
 
-def AppendObject(Key: str, Path: str = None, Data: str = None, Header: dict = None, ProgressCallback: object = None, Options: dict = None) -> dict:
+def AppendObject(Key: str, Path: str = None, Data: str = None, Header: dict = None, ProgressCallback: callable = None, Options: dict = None) -> dict:
     '''
     Append Object to OSS Bucket. The Object Must be Appendable and The New Data will be Appended to the End of the Object.
     '''
