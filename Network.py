@@ -1,4 +1,4 @@
-def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | dict = None, Options: dict = None) -> str:
+def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | list = None, Options: dict = None) -> str:
     '''
     Query the DNS of a Host at Specific Region (Country in the World, or City of China), via HTTP DNS.
     '''
@@ -49,14 +49,14 @@ def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | dict
             for Rule in [_ for _ in Region if not _.startswith('-')]: Pool.append(FetchIPs(Rule, IPs))
             if not Pool: Pool = IPs
 
-            def MergeIPs(Tar, Src):
+            def FlattenIPs(Tar, Src):
                 if isinstance(Src, list):
-                    for _ in Src: MergeIPs(Tar, _)
+                    for _ in Src: FlattenIPs(Tar, _)
                 elif isinstance(Src, dict):
-                    for _, _IPs in Src.items(): MergeIPs(Tar, _IPs)
+                    for _, _IPs in Src.items(): FlattenIPs(Tar, _IPs)
                 else: Tar.append(Src)
 
-            IP = []; MergeIPs(IP, Pool)
+            IP = []; FlattenIPs(IP, Pool)
             IP = random.choice(IP)
     except Exception as Error:
         return ''
@@ -106,7 +106,7 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
     Provider = None
     if '.' in Ip and re.match(r'^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$', Ip): Provider = Options['Provider_V4']
     if ':' in Ip and re.match(r'^([\da-fA-F]{1,4}:){6}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^::([\da-fA-F]{1,4}:){0,4}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:):([\da-fA-F]{1,4}:){0,3}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){2}:([\da-fA-F]{1,4}:){0,2}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){3}:([\da-fA-F]{1,4}:){0,1}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){4}:((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$|^:((:[\da-fA-F]{1,4}){1,6}|:)$|^[\da-fA-F]{1,4}:((:[\da-fA-F]{1,4}){1,5}|:)$|^([\da-fA-F]{1,4}:){2}((:[\da-fA-F]{1,4}){1,4}|:)$|^([\da-fA-F]{1,4}:){3}((:[\da-fA-F]{1,4}){1,3}|:)$|^([\da-fA-F]{1,4}:){4}((:[\da-fA-F]{1,4}){1,2}|:)$|^([\da-fA-F]{1,4}:){5}:([\da-fA-F]{1,4})?$|^([\da-fA-F]{1,4}:){6}:$', Ip): Provider = Options['Provider_V6']
-    if not Provider in ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips', 'Dashi']: return '未知 未知'
+    if Provider not in ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips', 'Dashi']: return '未知 未知'
 
     Location = [''] * 6     # 国家, 省份, 城市, 区县, 地址, 网络
     if  Provider == 'Bt'    : Location = __QueryIpLocation_Bt   (Ip, Options)
