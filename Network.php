@@ -61,10 +61,10 @@ function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $
                 $Pool = $IPs;
             }
 
-            function MergeIPs(&$Tar, $Src) {
+            function FlattenIPs(&$Tar, $Src) {
                 if (is_array($Src)) {
                     foreach ($Src as $Item) {
-                        MergeIPs($Tar, $Item);
+                        FlattenIPs($Tar, $Item);
                     }
                 } else {
                     $Tar[] = $Src;
@@ -72,7 +72,7 @@ function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $
             }
 
             $IP = [];
-            MergeIPs($IP, $Pool);
+            FlattenIPs($IP, $Pool);
             $IP = $IP[array_rand($IP)];
         }
     } catch (Exception $Error) {
