@@ -275,12 +275,12 @@ class FcWsgi(object):
         self._Out_Size = len(self._Out_Body)
 
         try:
-            self._Out_Head = {_Key.lower(): _Value for _Key, _Value in Header.items()}
+            self._Out_Head = {_Key.lower(): _Value for _Key, _Value in (Header or {}).items()}
             self._Out_Head.setdefault('content-type', 'application/json')
         except Exception as Error:
             self._Out_Head = {'content-type': 'application/json'}
 
-        self._StartResponse(self._Out_Code, [(_Key, _Value) for _Key, _Value in Header.items()])
+        self._StartResponse(self._Out_Code, [(_Key, _Value) for _Key, _Value in (Header or self._Out_Head).items()])
 
         self._T3 = int(time.time() * 1000) # T3: Time @ Sending the Response (Millisecond)
       # self._T4 = -1                      # T4: Time @ Destroy the Instance (Millisecond)
@@ -532,13 +532,15 @@ class FlaskWsgi(object):
         if self._Inn_Size <= 0:
             return {}
 
-        if 'multipart/form-data' in self._FlaskRequest.content_type.lower():
+        _ContentType = (self._FlaskRequest.content_type or '').lower()
+
+        if 'multipart/form-data' in _ContentType:
             return __DecodeMultipart(self._FlaskRequest)
 
-        if 'application/json' in self._FlaskRequest.content_type.lower():
+        if 'application/json' in _ContentType:
             return __DecodeJson(self._FlaskRequest)
 
-        if 'application/x-www-form-urlencoded' in self._FlaskRequest.content_type.lower():
+        if 'application/x-www-form-urlencoded' in _ContentType:
             return __DecodeForm(self._FlaskRequest)
 
         return __DecodeJson(self._FlaskRequest) or __DecodeForm(self._FlaskRequest) or {}
@@ -627,4 +629,4 @@ class FlowControl(object):
         '''
         Reset the Flow Control.
         '''
-        self = self.__isub__(self.Count)
+        self.__isub__(self.Count)
