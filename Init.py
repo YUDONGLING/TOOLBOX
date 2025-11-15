@@ -17,7 +17,8 @@ def __getattr__(Name: str):
 def __setattr__(Name: str, Value):
     if Name in ('ExeConfig', 'EnvironVar'):
         _ConfigCache[Name] = Value
-    raise AttributeError(f'Can\'t Set Attribute of \'{Name}\'')
+    else:
+        raise AttributeError(f'Can\'t Set Attribute of \'{Name}\'')
 
 
 def AsyncCall(Function: callable, *Args, **Kwargs) -> object:
@@ -132,6 +133,7 @@ def ReloadConfig(Path: str = None) -> dict:
                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ExeConfig.json')
 
     _ConfigCache['ExeConfig'] = ReadConfig(Path)
+    return _ConfigCache['ExeConfig']
 
 
 def ReadEnvironVar(Path: str = None) -> dict:
@@ -234,3 +236,4 @@ def ReloadEnvironVar(Path: str = None) -> dict:
                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'EnvironVariable.json' or 'EnvironVariable_AES.json')
 
     _ConfigCache['EnvironVar'] = ReadEnvironVar(Path)
+    return _ConfigCache['EnvironVar']
