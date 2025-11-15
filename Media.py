@@ -2,8 +2,8 @@ def GetInfo(Path: str, Options: dict = None) -> dict:
     '''
     Get Information of a Media File, Including Height, Width, Size, etc.
     '''
-    return __GetOnline(Path, Options) if Path.startswith('http') \
-       else __GetLocal(Path, Options)
+    return __GetOnline(Path, Options) if (Path.startswith('http://') or Path.startswith('https://')) \
+      else __GetLocal(Path, Options)
 
 
 def __GetLocal(Path: str, Options: dict = None) -> dict:
@@ -242,7 +242,7 @@ def __MakeThumbnail_CV2(Path: str, Options: dict = None) -> dict:
         Mda = cv2.VideoCapture(Path)
         if not Mda.isOpened(): raise Exception('Couldn\'t Read Video Stream from File %s' % Path)
 
-        Pos = int(min(Mda.get(cv2.CAP_PROP_FRAME_COUNT) / Mda.get(cv2.CAP_PROP_FPS) * 1000, 0.05 * 1000))
+        Pos = int(min(Mda.get(cv2.CAP_PROP_FRAME_COUNT) / (Mda.get(cv2.CAP_PROP_FPS) or 1) * 1000, 0.05 * 1000))
         Mda.set(cv2.CAP_PROP_POS_MSEC, Pos)
 
         cv2.imwrite(Options['Path'], Mda.read()[1])
