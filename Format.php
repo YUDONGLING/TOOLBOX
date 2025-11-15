@@ -20,9 +20,11 @@ function SafePath(string $Path, array $Options = null): array {
     ];
 
     try {
-        foreach ($Options["ForceReplace"] as $Rule) {
-            if (count($Rule) == 2) {
-                $Path = str_replace($Rule[0], $Rule[1], $Path);
+        foreach ($Options["ForceReplace"] as $_Rule) {
+            if (is_array($_Rule) && count($_Rule) == 2) {
+                if (is_string($_Rule[0]) && is_string($_Rule[1])) {
+                    $Path = str_replace($_Rule[0], $_Rule[1], $Path);
+                }
             }
         }
         $Path = preg_replace("/\s+/", " ", preg_replace("/[\\/:*?\"<>|\n]/", " ", $Path));
@@ -50,11 +52,14 @@ function ConvertSize(int $Size, string $Unit = "B", array $Options = null): arra
         "Result" => ""
     ];
 
-    $Units   = ["B",       "KB",       "MB",       "GB",       "TB",       "PB"      ];
-    $Weights = ["B" =>  0, "KB" =>  1, "MB" =>  2, "GB" =>  3, "TB" =>  4, "PB" =>  5];
-    $Sizes   = ["B" => -1, "KB" => -1, "MB" => -1, "GB" => -1, "TB" => -1, "PB" => -1];
+    $Units   = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    $Weights = array_combine($Units, range(0, count($Units) - 1));
+    $Sizes   = array_fill_keys($Units, -1);
 
     try {
+        if (!is_int($Size) && !is_float($Size)) {
+            throw new TypeError("Size Must be Int or Float");
+        }
         if ($Size < 0) {
             throw new ValueError("Size Must be Positive");
         }
@@ -72,9 +77,14 @@ function ConvertSize(int $Size, string $Unit = "B", array $Options = null): arra
             $Sizes[$Unit] = $SizeInBytes / (1024 ** $Weights[$Unit]);
         }
 
-        $AutoUnit = end(array_filter($Units, function($Unit) use ($Sizes) {
-            return $Sizes[$Unit] >= 1;
-        }));
+        AutoUnit = 'B';
+        for ($i = count($Units) - 1; $i >= 1; $i--) {
+            $Unit = $Units[$i];
+            if ($Sizes[$Unit] >= 1) {
+                AutoUnit = $Unit;
+                break;
+            }
+        }
     } catch (Exception $Error) {
         $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error); return $Response;
     }
