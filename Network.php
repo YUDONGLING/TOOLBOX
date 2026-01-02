@@ -113,16 +113,18 @@ function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $
  * 
  * Bt   : IPv4 (国内 区县级, 国外 国家级)
  * Zx   : IPv4 (国内 城市级, 国外 国家级), IPv6 (国内 城市级, 国外 省份级)
+ * Btv  : IPv4 (国内 城市级, 国外 省份级), IPv6 (国内 城市级, 国外 省份级)
  * Ldd  : IPv4 (国内 区县级, 国外 城市级), IPv6 (国内 城市级, 国外 省份级)
  * Ipa  : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
  * Ips  : IPv4 (国内 区县级, 国外 城市级), IPv6 (国内 省份级, 国外 省份级)
+ * Mei  : IPv4 (国内 楼栋级, 国外 城市级), IPv6 (国内 楼栋级, 国外 城市级)
  * Dashi: IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
  */
 function QueryIpLocation(string $Ip, array $Options = null): string {
     $DftOpts = [
         'User-Agent'  => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
-        'Provider_V4' => 'Bt',    // Bt, Zx, Ldd, Ipa, Ips, Dashi, Cz88 (TBA)
-        'Provider_V6' => 'Dashi', // Zx, Ips, Dashi, Cz88 (TBA)
+        'Provider_V4' => 'Bt',    // Bt, Zx, Btv, Ldd, Ipa, Ips, Mei, Dashi
+        'Provider_V6' => 'Dashi', //     Zx, Btv, Ldd, Ipa, Ips, Mei, Dashi
         'Timeout'     => 5
     ];
     $Options = MergeDictionaries($DftOpts, $Options);
@@ -134,16 +136,18 @@ function QueryIpLocation(string $Ip, array $Options = null): string {
     if (strpos($Ip, ':') !== false && preg_match('/^([\da-fA-F]{1,4}:){6}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^::([\da-fA-F]{1,4}:){0,4}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:):([\da-fA-F]{1,4}:){0,3}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){2}:([\da-fA-F]{1,4}:){0,2}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){3}:([\da-fA-F]{1,4}:){0,1}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){4}:((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$|^:((:[\da-fA-F]{1,4}){1,6}|:)$|^[\da-fA-F]{1,4}:((:[\da-fA-F]{1,4}){1,5}|:)$|^([\da-fA-F]{1,4}:){2}((:[\da-fA-F]{1,4}){1,4}|:)$|^([\da-fA-F]{1,4}:){3}((:[\da-fA-F]{1,4}){1,3}|:)$|^([\da-fA-F]{1,4}:){4}((:[\da-fA-F]{1,4}){1,2}|:)$|^([\da-fA-F]{1,4}:){5}:([\da-fA-F]{1,4})?$|^([\da-fA-F]{1,4}:){6}:$/', $Ip)) {
         $Provider = $Options['Provider_V6'];
     };
-    if (!in_array($Provider, ['Bt', 'Zx', 'Ldd', 'Ipa', 'Ips', 'Dashi'])) {
+    if (!in_array($Provider, ['Bt', 'Zx', 'Btv', 'Ldd', 'Ipa', 'Ips', 'Mei', 'Dashi'])) {
         return '未知 未知';
     }
 
     $Location = [''] * 6;
     if ($Provider == 'Bt')    $Location = __QueryIpLocation_Bt   ($Ip, $Options);
     if ($Provider == 'Zx')    $Location = __QueryIpLocation_Zx   ($Ip, $Options);
+    if ($Provider == 'Btv')   $Location = __QueryIpLocation_Btv  ($Ip, $Options);
     if ($Provider == 'Ldd')   $Location = __QueryIpLocation_Ldd  ($Ip, $Options);
     if ($Provider == 'Ipa')   $Location = __QueryIpLocation_Ipa  ($Ip, $Options);
     if ($Provider == 'Ips')   $Location = __QueryIpLocation_Ips  ($Ip, $Options);
+    if ($Provider == 'Mei')   $Location = __QueryIpLocation_Mei  ($Ip, $Options);
     if ($Provider == 'Dashi') $Location = __QueryIpLocation_Dashi($Ip, $Options);
     if ($Location == [''] * 6) return '未知 未知';
 
@@ -225,6 +229,37 @@ function __QueryIpLocation_Zx(string $Ip, array $Options): array {
         ])), true)['data'];
 
         return array_merge(array_slice(array_merge(explode(' ', preg_replace('/\s+/', ' ', str_replace(['–', "\t"], ' ', $Rsp['country']))), [''] * 5), 0, 5), [$Rsp['local']]);
+    } catch (Exception $Error) {
+        return [''] * 6;
+    }
+}
+
+function __QueryIpLocation_Btv(string $Ip, array $Options): array {
+    try {
+        $Url = substr(base64_decode('LWh0dHBzOi8vYXBpLmxpdmUuYmlsaWJpbGkuY29tL2lwX3NlcnZpY2UvdjEvaXBfc2VydmljZS9nZXRfaXBfYWRkcj9pcD0='), 1) . $Ip;
+        $Hed = [
+            'Accept'          => '*/*',
+            'Accept-Language' => 'zh-CN,zh;q=0.9',
+            'Cache-Control'   => 'no-cache',
+            'Connection'      => 'keep-alive',
+            'DNT'             => '1',
+            'Origin'          => substr(base64_decode('LWh0dHBzOi8vbGl2ZS5iaWxpYmlsaS5jb20='), 1),
+            'Pragma'          => 'no-cache',
+            'Referer'         => substr(base64_decode('LWh0dHBzOi8vbGl2ZS5iaWxpYmlsaS5jb20v'), 1),
+            'Sec-Fetch-Dest'  => 'empty',
+            'Sec-Fetch-Mode'  => 'cors',
+            'Sec-Fetch-Site'  => 'same-site',
+            'User-Agent'      => $Options['User-Agent'],
+            'X-Forwarded-For' => $Ip
+        ];
+        $Rsp = json_decode(file_get_contents($Url, false, stream_context_create([
+            'http' => [
+                'header'  => implode("\r\n", array_map(function($k, $v) { return "$k: $v"; }, array_keys($Hed), $Hed)),
+                'timeout' => $Options['Timeout']
+            ]
+        ])), true)['data'];
+
+        return [$Rsp['country'], $Rsp['province'], $Rsp['city'], '', '', strtoupper($Rsp['isp'])];
     } catch (Exception $Error) {
         return [''] * 6;
     }
@@ -331,6 +366,54 @@ function __QueryIpLocation_Ips(string $Ip, array $Options): array {
         return array_merge(array_slice(array_merge(explode(' ', preg_replace('/\s+/', ' ', $__1)), [''] * 5), 0, 5), [$__2]);
     } catch (Exception $Error) {
         return [''] * 6;
+    }
+}
+
+function __QueryIpLocation_Mei(string $Ip, array $Options): array {
+    try {
+        $Url = substr(base64_decode('LWh0dHBzOi8vYXBpbW9iaWxlLm1laXR1YW4uY29tL2xvY2F0ZS92Mi9pcC9sb2M/cmdlbz10cnVlJmlwPQ=='), 1) . $Ip;
+        $Hed = [
+            'Accept'          => '*/*',
+            'Accept-Language' => 'zh-CN,zh;q=0.9',
+            'Cache-Control'   => 'no-cache',
+            'Content-Type'    => 'application/json;charset=UTF-8',
+            'DNT'             => '1',
+            'Origin'          => substr(base64_decode('LWh0dHBzOi8vd2FpbWFpLm1laXR1YW4uY29t'), 1),
+            'Pragma'          => 'no-cache',
+            'Priority'        => 'u=1, i',
+            'Referer'         => substr(base64_decode('LWh0dHBzOi8vd2FpbWFpLm1laXR1YW4uY29tLw=='), 1),
+            'Sec-Fetch-Dest'  => 'empty',
+            'Sec-Fetch-Mode'  => 'cors',
+            'Sec-Fetch-Site'  => 'same-site',
+            'User-Agent'      => $Options['User-Agent'],
+            'X-Forwarded-For' => $Ip
+        ];
+        $Rsp_Locate = json_decode(file_get_contents($Url, false, stream_context_create([
+            'http' => [
+                'header'  => implode("\r\n", array_map(function($k, $v) { return "$k: $v"; }, array_keys($Hed), $Hed)),
+                'timeout' => $Options['Timeout']
+            ]
+        ])), true)['data'];
+    } catch (Exception $Error) {
+        return array_fill(0, 6, '');
+    }
+
+    try {
+        $Url = substr(base64_decode('LWh0dHBzOi8vYXBpbW9iaWxlLm1laXR1YW4uY29tL2dyb3VwL3YxL2NpdHkvbGF0bG5nLw=='), 1) . sprintf('%s,%s', $Rsp_Locate['lat'], $Rsp_Locate['lng']) . substr(base64_decode('LT90YWc9MA=='), 1);
+        $Rsp_Latlng = json_decode(file_get_contents($Url, false, stream_context_create([
+            'http' => [
+                'header'  => implode("\r\n", array_map(function($k, $v) { return "$k: $v"; }, array_keys($Hed), $Hed)),
+                'timeout' => $Options['Timeout']
+            ]
+        ])), true)['data'];
+        
+        try {
+            return [$Rsp_Latlng['country'], $Rsp_Latlng['province'], $Rsp_Latlng['city'], $Rsp_Latlng['district'], rtrim(sprintf('%s (%s)', trim($Rsp_Latlng['areaName']), trim($Rsp_Latlng['detail'])), ' ()'), ''];
+        } catch (Exception $Error) {
+            return [$Rsp_Locate['rgeo']['country'], $Rsp_Locate['rgeo']['province'], $Rsp_Locate['rgeo']['city'], $Rsp_Locate['rgeo']['district'] ?? '', '', ''];
+        }
+    } catch (Exception $Error) {
+        return array_fill(0, 6, '');
     }
 }
 
