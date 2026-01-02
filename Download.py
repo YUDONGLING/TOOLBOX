@@ -120,7 +120,7 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
         if Head['Ec']          != 0: raise Exception(Head['Em'])
         if Head['Code'] // 100 != 2: raise Exception(f'HTTP Code is {Head["Code"]}')
 
-        Tool = 'Requests' if Head['Content-Length'] <= Options['DownloadKit.Block'] else 'DownloadKit'
+        Tool = 'Requests' if (Head['Content-Length'] != -1 and Head['Content-Length'] <= Options['DownloadKit.Block']) else 'DownloadKit'
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
