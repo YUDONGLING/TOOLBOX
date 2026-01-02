@@ -21,6 +21,46 @@ def __setattr__(Name: str, Value):
         raise AttributeError(f'Can\'t Set Attribute of \'{Name}\'')
 
 
+def __delattr__(Name: str):
+    if Name in ('ExeConfig', 'EnvironVar'):
+        if Name in _ConfigCache:
+            del _ConfigCache[Name]
+    else:
+        raise AttributeError(f'Can\'t Delete Attribute of \'{Name}\'')
+
+
+class DotAccessDict(dict):
+    '''
+    Dictionary with Dot Notation Access Support. Allows `Config['Key']` and `Config.Key` Styles (or Both).
+    '''
+    def __init__(self, *args, **kwargs):
+        super(DotAccessDict, self).__init__(*args, **kwargs)
+        for _Key, _Value in self.items():
+            if isinstance(_Value, dict):
+                self[_Key] = DotAccessDict(_Value)
+            elif isinstance(_Value, list):
+                self[_Key] = [DotAccessDict(_Item) if isinstance(_Item, dict) else _Item for _Item in _Value]
+
+    def __getattr__(self, Name):
+        if Name not in self:
+            self[Name] = DotAccessDict()
+        return self[Name]
+
+    def __setattr__(self, Name, Value):
+        if isinstance(Value, dict):
+            self[Name] = DotAccessDict(Value)
+        elif isinstance(Value, list):
+            self[Name] = [DotAccessDict(Item) if isinstance(Item, dict) else Item for Item in Value]
+        else:
+            self[Name] = Value
+
+    def __delattr__(self, Name):
+        try:
+            del self[Name]
+        except KeyError:
+            raise AttributeError(f"'DotAccessDict' Object Has No Attribute '{Name}'")
+
+
 def AsyncCall(Function: callable, *Args, **Kwargs) -> object:
     '''
     Call a Function Asynchronously. \n
@@ -43,30 +83,30 @@ def AsyncCall(Function: callable, *Args, **Kwargs) -> object:
     return Future
 
 
-def MergeDictionaries(Base: dict, Override: dict) -> dict:
+def MergeDictionaries(Base: dict, Override: dict) -> DotAccessDict:
     '''
     Merge two Dictionaries Recursively.
     '''
     import copy
 
-    if type(Base)     != dict: raise  TypeError('BASE MUST BE A TYPE OF DICTIONARY'.title())
-    if type(Override) != dict: return Base # raise TypeError('OVERRIDE MUST BE A TYPE OF DICTIONARY'.title())
+    if not isinstance(Base, dict): raise TypeError('BASE MUST BE A TYPE OF DICTIONARY'.title())
+    if not isinstance(Override, dict): return DotAccessDict(Base) if isinstance(Base, dict) else Base # raise TypeError('OVERRIDE MUST BE A TYPE OF DICTIONARY'.title())
 
     Cfg = copy.deepcopy(Base)
 
     for _Key, _Value in Override.items():
         if _Key in Cfg:
-            if type(Cfg[_Key]) == type(_Value) == dict:
+            if isinstance(Cfg[_Key], dict) and isinstance(_Value, dict):
                 Cfg[_Key] = MergeDictionaries(Cfg[_Key], _Value)
             else:
                 Cfg[_Key] = _Value
         else:
             Cfg[_Key] = _Value
 
-    return Cfg
+    return DotAccessDict(Cfg)
 
 
-def ReadConfig(Path: str = None) -> dict:
+def ReadConfig(Path: str = None) -> DotAccessDict:
     '''
     Read Configuration from a JSON File.
     '''
@@ -81,7 +121,7 @@ def ReadConfig(Path: str = None) -> dict:
 
     if os.path.exists(Path):
         with portalocker.Lock(Path, 'r', encoding = 'utf-8') as File:
-            return json.loads(File.read())
+            return DotAccessDict(json.loads(File.read()))
 
     raise FileNotFoundError('FILE DOES NOT EXIST'.title())
 
@@ -121,7 +161,7 @@ def SetConfig(Cfg: dict, Path: str = None, **Kwargs) -> None:
         File.write(json.dumps(Cfg, indent = 4, ensure_ascii = False))
 
 
-def ReloadConfig(Path: str = None) -> dict:
+def ReloadConfig(Path: str = None) -> DotAccessDict:
     '''
     Reload Configuration from a JSON File.
     '''
@@ -136,7 +176,7 @@ def ReloadConfig(Path: str = None) -> dict:
     return _ConfigCache['ExeConfig']
 
 
-def ReadEnvironVar(Path: str = None) -> dict:
+def ReadEnvironVar(Path: str = None) -> DotAccessDict:
     '''
     Decrypt Environment Variable from a JSON File.
     '''
@@ -162,12 +202,12 @@ def ReadEnvironVar(Path: str = None) -> dict:
 
     RawEnvPath = (Root.removesuffix('_AES') + Extension) if Root.endswith('_AES') else Path
     if os.path.exists(RawEnvPath):
-        return ReadConfig(RawEnvPath)
+        return DotAccessDict(ReadConfig(RawEnvPath))
 
     AesEnvPath = (Root + '_AES' + Extension) if not Root.endswith('_AES') else Path
     if os.path.exists(AesEnvPath):
         from cryptography.fernet import Fernet
-        return __Decrypt__(ReadConfig(AesEnvPath), Fernet(os.environ.get('AES_KEY', '').encode()))
+        return DotAccessDict(__Decrypt__(ReadConfig(AesEnvPath), Fernet(os.environ.get('AES_KEY', '').encode())))
 
     raise FileNotFoundError('FILE DOES NOT EXIST'.title())
 
@@ -224,7 +264,7 @@ def SetEnvironVar(Env: dict, Path: str = None, **Kwargs) -> None:
     SetConfig(__Encrypt__(Env, Fernet(AesKey)), AesEnvPath, Merge = False, Force = True)
 
 
-def ReloadEnvironVar(Path: str = None) -> dict:
+def ReloadEnvironVar(Path: str = None) -> DotAccessDict:
     '''
     Reload Environment Variable from a JSON File.
     '''
