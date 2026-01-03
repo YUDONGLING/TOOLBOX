@@ -87,23 +87,19 @@ def MergeDictionaries(Base: dict, Override: dict) -> DotAccessDict:
     '''
     Merge two Dictionaries Recursively.
     '''
-    import copy
-
     if not isinstance(Base, dict): raise TypeError('BASE MUST BE A TYPE OF DICTIONARY'.title())
     if not isinstance(Override, dict): return DotAccessDict(Base) if isinstance(Base, dict) else Base # raise TypeError('OVERRIDE MUST BE A TYPE OF DICTIONARY'.title())
 
-    Cfg = copy.deepcopy(Base)
-
     for _Key, _Value in Override.items():
-        if _Key in Cfg:
-            if isinstance(Cfg[_Key], dict) and isinstance(_Value, dict):
-                Cfg[_Key] = MergeDictionaries(Cfg[_Key], _Value)
+        if _Key in Base:
+            if isinstance(Base[_Key], dict) and isinstance(_Value, dict):
+                Base[_Key] = MergeDictionaries(Base[_Key], _Value)
             else:
-                Cfg[_Key] = _Value
+                Base[_Key] = _Value
         else:
-            Cfg[_Key] = _Value
+            Base[_Key] = _Value
 
-    return DotAccessDict(Cfg)
+    return DotAccessDict(Base)
 
 
 def ReadConfig(Path: str = None) -> DotAccessDict:
