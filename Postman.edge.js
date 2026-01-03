@@ -46,11 +46,19 @@ function parseLink( LinkString ) {
  * Encode Uint8Array to Base64 String.
  */
 function encodeArrayBuffer( U8Array ) {
-    var Binary = '';
-    for ( var i = 0; i < U8Array.length; i++ ) {
-        Binary += String.fromCharCode( U8Array[i] );
-    };
-    return btoa( Binary );
+    var ChunkSize = 65535; // 65535 = 21845 * 3
+    var Base64Parts = [];
+
+    for ( var i = 0; i < U8Array.length; i += ChunkSize ) {
+        var Chunk = U8Array.slice(i, Math.min(i + ChunkSize, U8Array.length));
+        var Binary = '';
+        for ( var j = 0; j < Chunk.length; j++ ) {
+            Binary += String.fromCharCode( Chunk[j] );
+        }
+        Base64Parts.push( btoa( Binary ) );
+    }
+    
+    return Base64Parts.join('');
 };
 
 /**
@@ -134,14 +142,8 @@ async function handleRequest( Request ) {
         var Content     = '',
             ContentType = (ResponseObj.headers.get('content-type') || '').toLowerCase();
 
-        if ( ContentType.includes('text') || ContentType.includes('charset') ) {
-            U8Array = new Uint8Array(await ResponseObj.arrayBuffer());
-            Text = new TextDecoder('utf-8').decode(U8Array);
-            Content = btoa(unescape(encodeURIComponent(Text)));
-        } else {
-            U8Array = new Uint8Array(await ResponseObj.arrayBuffer());
-            Content = encodeArrayBuffer(U8Array);
-        };
+        U8Array = new Uint8Array(await ResponseObj.arrayBuffer());
+        Content = encodeArrayBuffer(U8Array);
 
         return new Response(JSON.stringify({
             'ec'  :   0, 'em': '',
