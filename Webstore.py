@@ -239,8 +239,8 @@ def __Kv_Web(Action: str, Space: str, Item: list, Options: dict) -> dict:
     try:
         Url = base64.b64decode('LWh0dHA6Ly9zdG9yYWdlLmVkZ2Utcm91dGluZS55dWRvbmdsaW5nLm5ldC53LmNkbmdzbGIuY29tLw=='.encode()).decode()[1:]
         Hed = {
-            'content-type': 'application/json',
-            'host'        : base64.b64decode('LXN0b3JhZ2UuZWRnZS1yb3V0aW5lLnl1ZG9uZ2xpbmcubmV0'.encode()).decode()[1:]
+            'Content-Type': 'application/json',
+            'Host'        : base64.b64decode('LXN0b3JhZ2UuZWRnZS1yb3V0aW5lLnl1ZG9uZ2xpbmcubmV0'.encode()).decode()[1:]
         }
         Dat = {
             'action'   : Action,
