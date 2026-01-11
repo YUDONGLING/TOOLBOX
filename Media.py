@@ -157,8 +157,8 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
     }
 
     try:
-        if os.path.dirname(Options['Path']):
-            os.makedirs(os.path.dirname(Options['Path']), exist_ok = True)
+        if os.path.dirname(Options.Path):
+            os.makedirs(os.path.dirname(Options.Path), exist_ok = True)
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
@@ -167,19 +167,19 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
 
         Image = PIL.Image.open(Path).convert('RGB')
 
-        if Options['Size'][0] <= 0 or Options['Size'][1] <= 0:
-            if Options['Size'][1] <= 0: # 按宽度等比例缩放
-                Ratio_Resize = float(Options['Size'][0]) / float(Image.width)
-                Options['Size'] = (Options['Size'][0], int(Image.height * Ratio_Resize))
-            else: # 按高度等比例缩放
-                Ratio_Resize = float(Options['Size'][1]) / float(Image.height)
-                Options['Size'] = (int(Image.width * Ratio_Resize), Options['Size'][1])
+        if Options.Size[0] <= 0 or Options.Size[1] <= 0:
+            if Options.Size[1] <= 0:                              # 按宽度等比例缩放
+                Ratio_Resize = float(Options.Size[0]) / float(Image.width)
+                Options.Size = (Options.Size[0], int(Image.height * Ratio_Resize))
+            else:                                                 # 按高度等比例缩放
+                Ratio_Resize = float(Options.Size[1]) / float(Image.height)
+                Options.Size = (int(Image.width * Ratio_Resize), Options.Size[1])
 
-            Image = Image.resize(Options['Size'], PIL.Image.LANCZOS)
+            Image = Image.resize(Options.Size, PIL.Image.LANCZOS)
 
         else:
             Ratio_Orig = float(Image.width) / float(Image.height)
-            Ratio_Crop = float(Options['Size'][0]) / float(Options['Size'][1])
+            Ratio_Crop = float(Options.Size[0]) / float(Options.Size[1])
 
             if Ratio_Orig > Ratio_Crop:
                 _      = int(Image.height * Ratio_Crop)
@@ -190,16 +190,16 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
                 Margin = (Image.height - _) // 2
                 Image  = Image.crop((0, Margin, Image.width, Margin + _))
 
-            Image.thumbnail((min(Options['Size'][0], Image.width), min(Options['Size'][1], Image.height)))
+            Image.thumbnail((min(Options.Size[0], Image.width), min(Options.Size[1], Image.height)))
 
-        Image.save(Options['Path'], quality = Options['Quality'], format = 'JPEG')
-        Response['Path'] = Options['Path']
-        Response['Size'] = os.path.getsize(Options['Path'])
+        Image.save(Options.Path, quality = Options.Quality, format = 'JPEG')
+        Response['Path'] = Options.Path
+        Response['Size'] = os.path.getsize(Options.Path)
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        if Options['RemoveOrg']:
+        if Options.RemoveOrg:
             os.remove(Path)
     except Exception as Error:
         Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
@@ -233,8 +233,8 @@ def __MakeThumbnail_CV2(Path: str, Options: dict = None) -> dict:
     }
 
     try:
-        if os.path.dirname(Options['Path']):
-            os.makedirs(os.path.dirname(Options['Path']), exist_ok = True)
+        if os.path.dirname(Options.Path):
+            os.makedirs(os.path.dirname(Options.Path), exist_ok = True)
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
@@ -245,21 +245,21 @@ def __MakeThumbnail_CV2(Path: str, Options: dict = None) -> dict:
         Pos = int(min(Mda.get(cv2.CAP_PROP_FRAME_COUNT) / (Mda.get(cv2.CAP_PROP_FPS) or 1) * 1000, 0.05 * 1000))
         Mda.set(cv2.CAP_PROP_POS_MSEC, Pos)
 
-        cv2.imwrite(Options['Path'], Mda.read()[1])
+        cv2.imwrite(Options.Path, Mda.read()[1])
         Mda.release()
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        if Options['RemoveOrg']:
+        if Options.RemoveOrg:
             os.remove(Path)
     except Exception as Error:
         Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
 
-    return __MakeThumbnail_PIL(Options['Path'], Options = {
+    return __MakeThumbnail_PIL(Options.Path, Options = {
                                                     'Path'     : '%s-%s.jpg' % (Path, TimeUUID()),
-                                                    'Size'     : Options['Size'],
-                                                    'Quality'  : Options['Quality'],
+                                                    'Size'     : Options.Size,
+                                                    'Quality'  : Options.Quality,
                                                     'RemoveOrg': True
                                                 })
 
@@ -291,8 +291,8 @@ def __MakeThumbnail_FITZ(Path: str, Options: dict = None) -> dict:
     }
 
     try:
-        if os.path.dirname(Options['Path']):
-            os.makedirs(os.path.dirname(Options['Path']), exist_ok = True)
+        if os.path.dirname(Options.Path):
+            os.makedirs(os.path.dirname(Options.Path), exist_ok = True)
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
@@ -300,20 +300,20 @@ def __MakeThumbnail_FITZ(Path: str, Options: dict = None) -> dict:
         Pdf = fitz.open(Path)
         Img = Pdf[0].get_pixmap()
         Img = PIL.Image.frombytes('RGB', [Img.width, Img.height], Img.samples)
-        Img.save(Options['Path'], format = 'JPEG')
+        Img.save(Options.Path, format = 'JPEG')
         Pdf.close()
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        if Options['RemoveOrg']:
+        if Options.RemoveOrg:
             os.remove(Path)
     except Exception as Error:
         Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
 
-    return __MakeThumbnail_PIL(Options['Path'], Options = {
+    return __MakeThumbnail_PIL(Options.Path, Options = {
                                                     'Path'     : '%s-%s.jpg' % (Path, TimeUUID()),
-                                                    'Size'     : Options['Size'],
-                                                    'Quality'  : Options['Quality'],
+                                                    'Size'     : Options.Size,
+                                                    'Quality'  : Options.Quality,
                                                     'RemoveOrg': True
                                                 })

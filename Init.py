@@ -58,7 +58,7 @@ class DotAccessDict(dict):
         try:
             del self[Name]
         except KeyError:
-            raise AttributeError(f"'DotAccessDict' Object Has No Attribute '{Name}'")
+            raise AttributeError(f'\'DotAccessDict\' Object Has No Attribute \'{Name}\'')
 
 
 def AsyncCall(Function: callable, *Args, **Kwargs) -> object:

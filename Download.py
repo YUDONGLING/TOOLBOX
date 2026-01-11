@@ -34,28 +34,28 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
     }
 
     try:
-        Response['Url'] = ('&' if '?' in Url else '?').join([Url, '&'.join([f'{Key}={Value}' for Key, Value in Options['Params'].items()])]) if Options['Params'] else Url
+        Response['Url'] = ('&' if '?' in Url else '?').join([Url, '&'.join([f'{Key}={Value}' for Key, Value in Options.Params.items()])]) if Options.Params else Url
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         Rsp = requests.head(   Url,
-                               headers = Options['Header'],
-                               params  = Options['Params'],
-                               cookies = Options['Cookie'],
-                               timeout = Options['Timeout'],
-                               verify  = Options['Verify'],
-                               allow_redirects = Options['AllowRedirects'])
+                               headers = Options.Header,
+                               params  = Options.Params,
+                               cookies = Options.Cookie,
+                               timeout = Options.Timeout,
+                               verify  = Options.Verify,
+                               allow_redirects = Options.AllowRedirects)
 
         if not Rsp.ok:
             Rsp = requests.get(Url,
-                               headers = Options['Header'],
-                               params  = Options['Params'],
-                               cookies = Options['Cookie'],
-                               timeout = Options['Timeout'],
-                               verify  = Options['Verify'],
+                               headers = Options.Header,
+                               params  = Options.Params,
+                               cookies = Options.Cookie,
+                               timeout = Options.Timeout,
+                               verify  = Options.Verify,
                                stream  = True,
-                               allow_redirects = Options['AllowRedirects'])
+                               allow_redirects = Options.AllowRedirects)
             try: Rsp.close()
             except: pass
     except Exception as Error:
@@ -152,8 +152,8 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
         Response['Ec'] = 50004; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        if Options['Time']:
-            os.utime(Path, (int(Options['Time']), int(Options['Time'])))
+        if Options.Time:
+            os.utime(Path, (int(Options.Time), int(Options.Time)))
         elif Head['Last-Modified-At'] > 0:
             os.utime(Path, (int(Head['Last-Modified-At']), int(Head['Last-Modified-At'])))
     except Exception as Error:
@@ -194,12 +194,12 @@ def __GetFileViaRequests(Url: str, Path: str, Options: dict = None) -> dict:
 
     try:
         Rsp = requests.get(Url,
-                           headers = Options['Header'],
-                           params  = Options['Params'],
-                           cookies = Options['Cookie'],
-                           timeout = Options['Timeout'],
-                           verify  = Options['Verify'],
-                           allow_redirects = Options['AllowRedirects'])
+                           headers = Options.Header,
+                           params  = Options.Params,
+                           cookies = Options.Cookie,
+                           timeout = Options.Timeout,
+                           verify  = Options.Verify,
+                           allow_redirects = Options.AllowRedirects)
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
     
@@ -256,11 +256,12 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
         Tsk = Kit.add(Url, os.path.dirname(Path), os.path.basename(Path),
                       file_exists     = 'overwrite',
                       split           = True,
-                      headers         = Options['Header'],
-                      params          = Options['Params'],
-                      cookies         = Options['Cookie'],
-                      timeout         = Options['Timeout'],
-                      allow_redirects = Options['AllowRedirects'])
+                      headers         = Options.Header,
+                      params          = Options.Params,
+                      cookies         = Options.Cookie,
+                      timeout         = Options.Timeout,
+                      verify          = Options.Verify,
+                      allow_redirects = Options.AllowRedirects)
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
