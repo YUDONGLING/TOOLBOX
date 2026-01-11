@@ -20,11 +20,11 @@ def SafePath(Path: str, Options: dict = None) -> dict:
     }
 
     try:
-        for Rule in Options['ForceReplace']:
+        for Rule in Options.ForceReplace:
             if isinstance(Rule, (list, tuple)) and len(Rule) == 2:
                 if isinstance(Rule[0], str) and isinstance(Rule[1], str):
                     Path = Path.replace(Rule[0], Rule[1])
-        Response['Path'] = re.sub(r'\s+', ' ', re.sub(r'[\\/:*?\"<>|\n]', ' ', Path)).lstrip()[:Options['MaxLength']].rstrip()
+        Response['Path'] = re.sub(r'\s+', ' ', re.sub(r'[\\/:*?"<>|\n]', ' ', Path)).lstrip()[:Options.MaxLength].rstrip()
     except Exception as Error:
         Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
     
@@ -78,11 +78,11 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        Result = Options['Format'].replace('{{Size}}', f'{Sizes[AutoUnit]:.{Options["Place_After_Decimal_Point"]}f}').replace('{{Unit}}', AutoUnit)
+        Result = Options.Format.replace('{{Size}}', f'{Sizes[AutoUnit]:.{Options.Place_After_Decimal_Point}f}').replace('{{Unit}}', AutoUnit)
 
         for Unit in Units:
             Result = Result.replace(
-                '{{Size:%s}}' % Unit, f'{Sizes[Unit]:.{Options["Place_After_Decimal_Point"]}f}'
+                '{{Size:%s}}' % Unit, f'{Sizes[Unit]:.{Options.Place_After_Decimal_Point}f}'
             ).replace('{{Unit:%s}}' % Unit, Unit)
 
         Response['Result'] = Result

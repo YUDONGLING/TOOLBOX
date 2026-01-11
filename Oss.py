@@ -152,38 +152,38 @@ def SignUrl(Method: str, Key: str, Header: dict = None, Param: dict = None, Expi
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:
             raise Exception('Missing Required Fields')
 
-        if isinstance(Options['Endpoint'], str):
-            Options['Endpoint'] = Options['Endpoint'].removeprefix('http://').removeprefix('https://').removeprefix('//')
+        if isinstance(Options.Endpoint, str):
+            Options.Endpoint = Options.Endpoint.removeprefix('http://').removeprefix('https://').removeprefix('//')
 
-        if isinstance(Options['Endpoint'], dict):
-            Options['Endpoint'].setdefault('Oss.Bucket', Options['Bucket'])
-            Options['Endpoint'] = __EndPoint('Oss', Options['Region'], Options = Options['Endpoint'])
+        if isinstance(Options.Endpoint, dict):
+            Options.Endpoint.setdefault('Oss.Bucket', Options.Bucket)
+            Options.Endpoint = __EndPoint('Oss', Options.Region, Options = Options.Endpoint)
     except Exception as Error:
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         if Key.removeprefix('/') == '':
             SignedUrl_WithoutEndpoint = __Sign(
-                AK         = Options['AK'],
-                SK         = Options['SK'],
-                Region     = Options['Region'],
-                Bucket     = Options['Bucket'],
+                AK         = Options.AK,
+                SK         = Options.SK,
+                Region     = Options.Region,
+                Bucket     = Options.Bucket,
                 Method     = Method,
                 Url        = Key + ((('&' if '?' in Key else '?') + urllib.parse.urlencode(Param)) if Param else ''),
-                STSToken   = Options['STSToken'],
+                STSToken   = Options.STSToken,
                 Expires    = Expires
             )
-            Response['Url']['NoSheme'] = '%s%s' % (__EndPoint('Oss', Options['Region'], Options = {'Oss.Bucket': Options['Bucket']}) if not Options['Endpoint'] else Options['Endpoint'], SignedUrl_WithoutEndpoint)
+            Response['Url']['NoSheme'] = '%s%s' % (__EndPoint('Oss', Options.Region, Options = {'Oss.Bucket': Options.Bucket}) if not Options.Endpoint else Options.Endpoint, SignedUrl_WithoutEndpoint)
             Response['Url']['Https']   = 'https://%s' % Response['Url']['NoSheme']
             Response['Url']['Http']    = 'http://%s'  % Response['Url']['NoSheme']
         else:
             Response['Url']['NoSheme'] = __Bucket(
-                AK         = Options['AK'],
-                SK         = Options['SK'],
-                Region     = Options['Region'],
-                Bucket     = Options['Bucket'],
-                Cname      = Options['Endpoint'],
-                STSToken   = Options['STSToken']
+                AK         = Options.AK,
+                SK         = Options.SK,
+                Region     = Options.Region,
+                Bucket     = Options.Bucket,
+                Cname      = Options.Endpoint,
+                STSToken   = Options.STSToken
             ).sign_url(
                 method     = Method,
                 key        = Key.removeprefix('/'),
@@ -235,12 +235,12 @@ def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict =
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]] and Url is None:
             raise Exception('Missing Required Fields')
 
-        if isinstance(Options['Endpoint'], str):
-            Options['Endpoint'] = Options['Endpoint'].removeprefix('http://').removeprefix('https://').removeprefix('//')
+        if isinstance(Options.Endpoint, str):
+            Options.Endpoint = Options.Endpoint.removeprefix('http://').removeprefix('https://').removeprefix('//')
 
-        if isinstance(Options['Endpoint'], dict):
-            Options['Endpoint'].setdefault('Oss.Bucket', Options['Bucket'])
-            Options['Endpoint'] = __EndPoint('Oss', Options['Region'], Options = Options['Endpoint'])
+        if isinstance(Options.Endpoint, dict):
+            Options.Endpoint.setdefault('Oss.Bucket', Options.Bucket)
+            Options.Endpoint = __EndPoint('Oss', Options.Region, Options = Options.Endpoint)
     except Exception as Error:
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
@@ -250,12 +250,12 @@ def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict =
                 os.makedirs(os.path.dirname(Path), exist_ok = True)
 
             Bucket = __Bucket(
-                AK          = Options['AK'],
-                SK          = Options['SK'],
-                Region      = Options['Region'],
-                Bucket      = Options['Bucket'],
-                Cname       = Options['Endpoint'],
-                STSToken    = Options['STSToken']
+                AK       = Options.AK,
+                SK       = Options.SK,
+                Region   = Options.Region,
+                Bucket   = Options.Bucket,
+                Cname    = Options.Endpoint,
+                STSToken = Options.STSToken
             )
 
             Response['Result'] = Bucket.get_object_to_file(
@@ -331,12 +331,12 @@ def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = N
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:
             raise Exception('Missing Required Fields')
 
-        if isinstance(Options['Endpoint'], str):
-            Options['Endpoint'] = Options['Endpoint'].removeprefix('http://').removeprefix('https://').removeprefix('//')
+        if isinstance(Options.Endpoint, str):
+            Options.Endpoint = Options.Endpoint.removeprefix('http://').removeprefix('https://').removeprefix('//')
 
-        if isinstance(Options['Endpoint'], dict):
-            Options['Endpoint'].setdefault('Oss.Bucket', Options['Bucket'])
-            Options['Endpoint'] = __EndPoint('Oss', Options['Region'], Options = Options['Endpoint'])
+        if isinstance(Options.Endpoint, dict):
+            Options.Endpoint.setdefault('Oss.Bucket', Options.Bucket)
+            Options.Endpoint = __EndPoint('Oss', Options.Region, Options = Options.Endpoint)
     except Exception as Error:
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
@@ -345,12 +345,12 @@ def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = N
             os.makedirs(os.path.dirname(Path), exist_ok = True)
 
         Bucket = __Bucket(
-            AK       = Options['AK'],
-            SK       = Options['SK'],
-            Region   = Options['Region'],
-            Bucket   = Options['Bucket'],
-            Cname    = Options['Endpoint'],
-            STSToken = Options['STSToken']
+            AK       = Options.AK,
+            SK       = Options.SK,
+            Region   = Options.Region,
+            Bucket   = Options.Bucket,
+            Cname    = Options.Endpoint,
+            STSToken = Options.STSToken
         )
 
         Response['Result'] = resumable_download(
@@ -405,24 +405,24 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]] and Url is None:
             raise Exception('Missing Required Fields')
 
-        if isinstance(Options['Endpoint'], str):
-            Options['Endpoint'] = Options['Endpoint'].removeprefix('http://').removeprefix('https://').removeprefix('//')
+        if isinstance(Options.Endpoint, str):
+            Options.Endpoint = Options.Endpoint.removeprefix('http://').removeprefix('https://').removeprefix('//')
 
-        if isinstance(Options['Endpoint'], dict):
-            Options['Endpoint'].setdefault('Oss.Bucket', Options['Bucket'])
-            Options['Endpoint'] = __EndPoint('Oss', Options['Region'], Options = Options['Endpoint'])
+        if isinstance(Options.Endpoint, dict):
+            Options.Endpoint.setdefault('Oss.Bucket', Options.Bucket)
+            Options.Endpoint = __EndPoint('Oss', Options.Region, Options = Options.Endpoint)
     except Exception as Error:
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         if Url is None:
             Bucket = __Bucket(
-                AK          = Options['AK'],
-                SK          = Options['SK'],
-                Region      = Options['Region'],
-                Bucket      = Options['Bucket'],
-                Cname       = Options['Endpoint'],
-                STSToken    = Options['STSToken']
+                AK       = Options.AK,
+                SK       = Options.SK,
+                Region   = Options.Region,
+                Bucket   = Options.Bucket,
+                Cname    = Options.Endpoint,
+                STSToken = Options.STSToken
             )
 
             Response['Result'] = Bucket.put_object(
@@ -496,47 +496,47 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: ca
         if [_Key for _Key in ['Bucket', 'Policy', 'AK', 'Sign'] if not Options[_Key]]:
             raise Exception('Missing Required Fields')
 
-        if [_Key for _Key in ['Region'] if not Options[_Key]] and Options['Endpoint'] is None:
+        if [_Key for _Key in ['Region'] if not Options[_Key]] and Options.Endpoint is None:
             raise Exception('Missing Required Fields')
 
-        if not Options['Permission'] in ['private', 'public-read', 'public-read-write', 'default']:
-            Options['Permission'] = 'default'
+        if not Options.Permission in ['private', 'public-read', 'public-read-write', 'default']:
+            Options.Permission = 'default'
 
-        if not Options['Endpoint']:
-            Options['Endpoint'] = {}
+        if not Options.Endpoint:
+            Options.Endpoint = {}
 
-        if isinstance(Options['Endpoint'], str):
-            Options['Endpoint'] = Options['Endpoint'].removeprefix('http://').removeprefix('https://').removeprefix('//')
+        if isinstance(Options.Endpoint, str):
+            Options.Endpoint = Options.Endpoint.removeprefix('http://').removeprefix('https://').removeprefix('//')
 
-        if isinstance(Options['Endpoint'], dict):
-            Options['Endpoint'].setdefault('Oss.Bucket', Options['Bucket'])
-            Options['Endpoint'] = __EndPoint('Oss', Options['Region'], Options = Options['Endpoint'])
+        if isinstance(Options.Endpoint, dict):
+            Options.Endpoint.setdefault('Oss.Bucket', Options.Bucket)
+            Options.Endpoint = __EndPoint('Oss', Options.Region, Options = Options.Endpoint)
     except Exception as Error:
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         Encoder = MultipartEncoder(fields = {
-            'bucketName'          : Options['Bucket'],
+            'bucketName'          : Options.Bucket,
             'key'                 : Key,
-            'policy'              : Options['Policy'],
-            'Signature'           : Options['Sign'],
-            'OSSAccessKeyId'      : Options['AK'],
-            'x-oss-object-acl'    : Options['Permission'],
-            'x-oss-security-token': Options['STSToken'],
+            'policy'              : Options.Policy,
+            'Signature'           : Options.Sign,
+            'OSSAccessKeyId'      : Options.AK,
+            'x-oss-object-acl'    : Options.Permission,
+            'x-oss-security-token': Options.STSToken,
             'file'                : (Path, open(Path, 'rb'), 'application/octet-stream')
-        }) if Options['STSToken'] else MultipartEncoder(fields = {
-            'bucketName'          : Options['Bucket'],
+        }) if Options.STSToken else MultipartEncoder(fields = {
+            'bucketName'          : Options.Bucket,
             'key'                 : Key,
-            'policy'              : Options['Policy'],
-            'Signature'           : Options['Sign'],
-            'OSSAccessKeyId'      : Options['AK'],
-            'x-oss-object-acl'    : Options['Permission'],
+            'policy'              : Options.Policy,
+            'Signature'           : Options.Sign,
+            'OSSAccessKeyId'      : Options.AK,
+            'x-oss-object-acl'    : Options.Permission,
             'file'                : (Path, open(Path, 'rb'), 'application/octet-stream')
         })
         Monitor = MultipartEncoderMonitor(Encoder, Callback)
 
         Hed = Header or {}; Hed['content-type'] = Monitor.content_type
-        Rsp = requests.post(url = 'https://%s/' % Options['Endpoint'].removesuffix('/'), data = Monitor, headers = Hed)
+        Rsp = requests.post(url = 'https://%s/' % Options.Endpoint.removesuffix('/'), data = Monitor, headers = Hed)
 
         if not Rsp.status_code // 100 == 2:
             raise requests.exceptions.HTTPError(Rsp.text)
@@ -579,23 +579,23 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:
             raise Exception('Missing Required Fields')
 
-        if isinstance(Options['Endpoint'], str):
-            Options['Endpoint'] = Options['Endpoint'].removeprefix('http://').removeprefix('https://').removeprefix('//')
+        if isinstance(Options.Endpoint, str):
+            Options.Endpoint = Options.Endpoint.removeprefix('http://').removeprefix('https://').removeprefix('//')
 
-        if isinstance(Options['Endpoint'], dict):
-            Options['Endpoint'].setdefault('Oss.Bucket', Options['Bucket'])
-            Options['Endpoint'] = __EndPoint('Oss', Options['Region'], Options = Options['Endpoint'])
+        if isinstance(Options.Endpoint, dict):
+            Options.Endpoint.setdefault('Oss.Bucket', Options.Bucket)
+            Options.Endpoint = __EndPoint('Oss', Options.Region, Options = Options.Endpoint)
     except Exception as Error:
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         Bucket = __Bucket(
-            AK       = Options['AK'],
-            SK       = Options['SK'],
-            Region   = Options['Region'],
-            Bucket   = Options['Bucket'],
-            Cname    = Options['Endpoint'],
-            STSToken = Options['STSToken']
+            AK       = Options.AK,
+            SK       = Options.SK,
+            Region   = Options.Region,
+            Bucket   = Options.Bucket,
+            Cname    = Options.Endpoint,
+            STSToken = Options.STSToken
         )
 
         Response['Result'] = resumable_upload(
@@ -645,23 +645,23 @@ def AppendObject(Key: str, Path: str = None, Data: str = None, Header: dict = No
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:
             raise Exception('Missing Required Fields')
 
-        if isinstance(Options['Endpoint'], str):
-            Options['Endpoint'] = Options['Endpoint'].removeprefix('http://').removeprefix('https://').removeprefix('//')
+        if isinstance(Options.Endpoint, str):
+            Options.Endpoint = Options.Endpoint.removeprefix('http://').removeprefix('https://').removeprefix('//')
 
-        if isinstance(Options['Endpoint'], dict):
-            Options['Endpoint'].setdefault('Oss.Bucket', Options['Bucket'])
-            Options['Endpoint'] = __EndPoint('Oss', Options['Region'], Options = Options['Endpoint'])
+        if isinstance(Options.Endpoint, dict):
+            Options.Endpoint.setdefault('Oss.Bucket', Options.Bucket)
+            Options.Endpoint = __EndPoint('Oss', Options.Region, Options = Options.Endpoint)
     except Exception as Error:
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         Bucket = __Bucket(
-            AK          = Options['AK'],
-            SK          = Options['SK'],
-            Region      = Options['Region'],
-            Bucket      = Options['Bucket'],
-            Cname       = Options['Endpoint'],
-            STSToken    = Options['STSToken']
+            AK       = Options.AK,
+            SK       = Options.SK,
+            Region   = Options.Region,
+            Bucket   = Options.Bucket,
+            Cname    = Options.Endpoint,
+            STSToken = Options.STSToken
         )
 
         try:
@@ -714,23 +714,23 @@ def DeleteObject(Key: str | list, Header: dict = None, Param: dict = None, Optio
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:
             raise Exception('Missing Required Fields')
 
-        if isinstance(Options['Endpoint'], str):
-            Options['Endpoint'] = Options['Endpoint'].removeprefix('http://').removeprefix('https://').removeprefix('//')
+        if isinstance(Options.Endpoint, str):
+            Options.Endpoint = Options.Endpoint.removeprefix('http://').removeprefix('https://').removeprefix('//')
 
-        if isinstance(Options['Endpoint'], dict):
-            Options['Endpoint'].setdefault('Oss.Bucket', Options['Bucket'])
-            Options['Endpoint'] = __EndPoint('Oss', Options['Region'], Options = Options['Endpoint'])
+        if isinstance(Options.Endpoint, dict):
+            Options.Endpoint.setdefault('Oss.Bucket', Options.Bucket)
+            Options.Endpoint = __EndPoint('Oss', Options.Region, Options = Options.Endpoint)
     except Exception as Error:
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         Bucket = __Bucket(
-            AK          = Options['AK'],
-            SK          = Options['SK'],
-            Region      = Options['Region'],
-            Bucket      = Options['Bucket'],
-            Cname       = Options['Endpoint'],
-            STSToken    = Options['STSToken']
+            AK       = Options.AK,
+            SK       = Options.SK,
+            Region   = Options.Region,
+            Bucket   = Options.Bucket,
+            Cname    = Options.Endpoint,
+            STSToken = Options.STSToken
         )
 
         if isinstance(Key, str):

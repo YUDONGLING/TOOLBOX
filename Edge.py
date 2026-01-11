@@ -28,7 +28,7 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
             EdgeOptions.add_argument('--inprivate')
             Response['Private'] = True
         else:
-            EdgeOptions.add_argument('--user-data-dir=' + Options['UserDataPath'])
+            EdgeOptions.add_argument('--user-data-dir=' + Options.UserDataPath)
             Response['Private'] = False
 
         EdgeOptions.add_argument('--window-size=800,600')
@@ -44,7 +44,7 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
 
     try:
         Response['Driver'] = selenium.webdriver.Edge(
-            service = selenium.webdriver.edge.service.Service(executable_path = Options['DriverPath']),
+            service = selenium.webdriver.edge.service.Service(executable_path = Options.DriverPath),
             options = EdgeOptions
         )
     except Exception as Error:
@@ -100,13 +100,13 @@ def OpenUrl(Driver: object, Url: str, Options: dict = None) -> dict:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        if Options['ExpectedCondition']:
+        if Options.ExpectedCondition:
             from selenium.webdriver.support.ui import WebDriverWait
             from selenium.webdriver.support import expected_conditions as EC
-            WebDriverWait(Driver, Options['Timeout']).until(EC.title_contains(Options['ExpectedTitle']))
+            WebDriverWait(Driver, Options.Timeout).until(EC.title_contains(Options.ExpectedTitle))
         else:
             import time
-            time.sleep(Options['Timeout'])
+            time.sleep(Options.Timeout)
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 

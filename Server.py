@@ -57,9 +57,9 @@ async def _CallLog(Wsgi: object, Bucket: str = None, Region: str = None) -> None
                                             Options = {
                                                 'Region'  : Region,
                                                 'Bucket'  : Bucket,
-                                                'AK'      : Wsgi.Ram['AK'],
-                                                'SK'      : Wsgi.Ram['SK'],
-                                                'STSToken': Wsgi.Ram['Token']
+                                                'AK'      : Wsgi.Ram.AK,
+                                                'SK'      : Wsgi.Ram.SK,
+                                                'STSToken': Wsgi.Ram.Token
                                             }))
         else:
             MakeLog(Content = _LogStr, Path = _LogKey)
@@ -80,9 +80,9 @@ async def _CallLog(Wsgi: object, Bucket: str = None, Region: str = None) -> None
                                             Options = {
                                                 'Region'  : Region,
                                                 'Bucket'  : Bucket,
-                                                'AK'      : Wsgi.Ram['AK'],
-                                                'SK'      : Wsgi.Ram['SK'],
-                                                'STSToken': Wsgi.Ram['Token']
+                                                'AK'      : Wsgi.Ram.AK,
+                                                'SK'      : Wsgi.Ram.SK,
+                                                'STSToken': Wsgi.Ram.Token
                                             }))
         else:
             MakeLog(Content = _BodyStr, Path = _BodyKey)
@@ -160,6 +160,10 @@ class FcWsgi(object):
         import time
         import urllib.parse
 
+        if not __package__:
+              from  Init import DotAccessDict
+        else: from .Init import DotAccessDict
+
         self._T1 = int(time.time() * 1000) # T1: Time @ Initing the Instance (Millisecond)
         self._T2 = -1                      # T2: Time @ Initing the Payloads (Millisecond)
         self._T3 = -1                      # T3: Time @ Sending the Response (Millisecond)
@@ -175,20 +179,20 @@ class FcWsgi(object):
         self._Environ       = environ
         self._StartResponse = start_response
 
-        self.Ram = {
+        self.Ram = DotAccessDict({
             'Uid'   : self._Environ['FC_ACCOUNT_ID'],
             'AK'    : self._Environ['ALIBABA_CLOUD_ACCESS_KEY_ID'],
             'SK'    : self._Environ['ALIBABA_CLOUD_ACCESS_KEY_SECRET'],
             'Token' : self._Environ['ALIBABA_CLOUD_SECURITY_TOKEN'],
             'Region': self._Environ['FC_REGION']
-        }
+        })
 
-        self.Instance = {
+        self.Instance = DotAccessDict({
             'Service' : self._Environ['FC_SERVICE_NAME'],
             'Function': self._Environ['FC_FUNCTION_NAME'],
             'Version' : self._Environ['FC_QUALIFIER'],
             'Instance': self._Environ['FC_INSTANCE_ID']
-        }
+        })
 
         self.Id = self._Environ['fc.context'].request_id
         self.Ip = _FindIp(
@@ -220,14 +224,14 @@ class FcWsgi(object):
         self.Path    = urllib.parse.unquote(self._Environ.get('PATH_INFO', ''))
         self.Referer = self._Environ.get('HTTP_REFERER', '')
 
-        self.Header  = {}
+        self.Header  = DotAccessDict({})
         for _Key, _Value in self._Environ.items():
             if _Key.startswith('HTTP_') and _Key not in ['HTTP_COOKIE']:
                 self.Header[
                     urllib.parse.unquote(_Key[5:].replace('_', '-').lower())
                 ] = urllib.parse.unquote(_Value)
 
-        self.Cookie  = {}
+        self.Cookie  = DotAccessDict({})
         for _Key_Value in [_.split('=', 1) for _ in urllib.parse.unquote(self._Environ.get('HTTP_COOKIE', '')).split('; ') if _]:
             if len(_Key_Value) > 1:
                 try:    self.Cookie[urllib.parse.unquote(_Key_Value[0]).lower()] = json.loads(urllib.parse.unquote(_Key_Value[1]))
@@ -235,7 +239,7 @@ class FcWsgi(object):
             else:
                 self.Cookie[urllib.parse.unquote(_Key_Value[0]).lower()] = ''
 
-        self.Params  = {}
+        self.Params  = DotAccessDict({})
         for _Key_Value in [_.split('=', 1) for _ in urllib.parse.unquote(self._Environ.get('QUERY_STRING', '')).split('&') if _]:
             if len(_Key_Value) > 1:
                 try:    self.Params[urllib.parse.unquote(_Key_Value[0])] = json.loads(urllib.parse.unquote(_Key_Value[1]))
@@ -245,8 +249,8 @@ class FcWsgi(object):
 
         self.Payload = self.DecodePayload()
 
-        self.Storage = {}
-        self.Options = {
+        self.Storage = DotAccessDict({})
+        self.Options = DotAccessDict({
             'Log.Enable'      : False,
             'Log.Remote'      : False,
             'Log.Prefix'      : '',
@@ -260,7 +264,7 @@ class FcWsgi(object):
             'Webhook.Enable'  : False,
             'Webhook.Request' : False,
             'Webhook.Response': False,
-        }
+        })
 
         self._T2 = int(time.time() * 1000) # T2: Time @ Initing the Payloads (Millisecond)
       # self._T3 = -1                      # T3: Time @ Sending the Response (Millisecond)
@@ -276,9 +280,9 @@ class FcWsgi(object):
 
         try:
             self._Out_Head = {_Key.lower(): _Value for _Key, _Value in (Header or {}).items()}
-            self._Out_Head.setdefault('content-type', 'application/json')
+            self._Out_Head.setdefault('Content-Type', 'application/json')
         except Exception as Error:
-            self._Out_Head = {'content-type': 'application/json'}
+            self._Out_Head = {'Content-Type': 'application/json'}
 
         self._StartResponse(self._Out_Code, [(_Key, _Value) for _Key, _Value in (Header or self._Out_Head).items()])
 
@@ -370,8 +374,8 @@ class FlaskWsgi(object):
         import urllib.parse
 
         if not __package__:
-              from  UUID import HashUUID
-        else: from .UUID import HashUUID
+              from  Init import DotAccessDict; from  UUID import HashUUID
+        else: from .Init import DotAccessDict; from .UUID import HashUUID
 
         self._T1 = int(time.time() * 1000) # T1: Time @ Initing the Instance (Millisecond)
         self._T2 = -1                      # T2: Time @ Initing the Payloads (Millisecond)
@@ -388,26 +392,26 @@ class FlaskWsgi(object):
         self._Environ      = environ
         self._FlaskRequest = flask_request
 
-        self.Ram = {
+        self.Ram = DotAccessDict({
             'Uid'   : self._Environ.get('Uid', ''),
             'AK'    : self._Environ.get('AK', ''),
             'SK'    : self._Environ.get('SK', ''),
             'Token' : self._Environ.get('Token', ''),
             'Region': self._Environ.get('Region', '')
-        }
+        })
 
-        try: self.Instance = {
+        try: self.Instance = DotAccessDict({
             'Service' : self._FlaskRequest.environ.get('SERVER_SOFTWARE', '').split('/')[ 0] or 'Flask',
             'Function': traceback.extract_stack()[-2].name.title().replace('_', '') if len(traceback.extract_stack()) > 1 else 'None',
             'Version' : self._FlaskRequest.environ.get('SERVER_SOFTWARE', '').split('/')[-1] or 'None',
             'Instance': HashUUID(''.join(os.uname()))
-        }
-        except Exception as Error: self.Instance = {
+        })
+        except Exception as Error: self.Instance = DotAccessDict({
             'Service' : 'Flask',
             'Function': 'None',
             'Version' : 'None',
             'Instance': '00000000-0000-0000-0000-000000000000'
-        }
+        })
 
         self.Id = '%d%09d' % (int(time.time() * 1000), random.randint(1, 999999999))
         self.Ip = _FindIp(
@@ -438,27 +442,27 @@ class FlaskWsgi(object):
         self.Path    = self._FlaskRequest.path
         self.Referer = self._FlaskRequest.headers.get('referer', '')
 
-        self.Header  = {}
+        self.Header  = DotAccessDict({})
         for _Key, _Value in self._FlaskRequest.headers.items():
             if _Key.upper() not in ['COOKIE']:
                 self.Header[
                     urllib.parse.unquote(_Key).lower()
                 ] = urllib.parse.unquote(_Value)
 
-        self.Cookie  = {}
+        self.Cookie  = DotAccessDict({})
         for _Key, _Value in self._FlaskRequest.cookies.items():
             try:    self.Cookie[urllib.parse.unquote(_Key.lower())] = json.loads(urllib.parse.unquote(_Value))
             except: self.Cookie[urllib.parse.unquote(_Key.lower())] = urllib.parse.unquote(_Value)
 
-        self.Params  = {}
+        self.Params  = DotAccessDict({})
         for _Key, _Value in self._FlaskRequest.args.items():
             try:    self.Params[urllib.parse.unquote(_Key)] = json.loads(urllib.parse.unquote(_Value))
             except: self.Params[urllib.parse.unquote(_Key)] = urllib.parse.unquote(_Value)
 
         self.Payload = self.DecodePayload()
 
-        self.Storage = {}
-        self.Options = {
+        self.Storage = DotAccessDict({})
+        self.Options = DotAccessDict({
             'Log.Enable'      : False,
             'Log.Remote'      : False,
             'Log.Prefix'      : '',
@@ -472,7 +476,7 @@ class FlaskWsgi(object):
             'Webhook.Enable'  : False,
             'Webhook.Request' : False,
             'Webhook.Response': False,
-        }
+        })
 
         self._T2 = int(time.time() * 1000) # T2: Time @ Initing the Payloads (Millisecond)
       # self._T3 = -1                      # T3: Time @ Sending the Response (Millisecond)
@@ -488,9 +492,9 @@ class FlaskWsgi(object):
 
         try:
             self._Out_Head = {_Key.lower(): _Value for _Key, _Value in (Header or {}).items()}
-            self._Out_Head.setdefault('content-type', 'application/json')
+            self._Out_Head.setdefault('Content-Type', 'application/json')
         except Exception as Error:
-            self._Out_Head = {'content-type': 'application/json'}
+            self._Out_Head = {'Content-Type': 'application/json'}
 
         self._T3 = int(time.time() * 1000) # T3: Time @ Sending the Response (Millisecond)
       # self._T4 = -1                      # T4: Time @ Destroy the Instance (Millisecond)
@@ -577,7 +581,7 @@ class FlowControl(object):
         self._Options = MergeDictionaries(DftOpts, Options)
 
         try:
-            os.makedirs(self._Options['Folder'], exist_ok = True)
+            os.makedirs(self._Options.Folder, exist_ok = True)
         except Exception as Error:
             self._Options['Folder']   = self._Options['Folder'].replace('/', '-').replace('\\', '-')
             self._Options['Prefix.+'] = '%s_%s' % (self._Options['Folder'], self._Options['Prefix.+'])
@@ -600,13 +604,13 @@ class FlowControl(object):
         import os
         import uuid
         try:
-            with open(os.path.join(self._Options['Folder'], '%s%s' % (Prefix, uuid.uuid4())), 'w') as File: File.write('')
+            with open(os.path.join(self._Options.Folder, '%s%s' % (Prefix, uuid.uuid4())), 'w') as File: File.write('')
         except Exception as Error: pass
 
     def __CountFile(self, Prefix):
         import os
         try:
-            return len([File for File in os.listdir(self._Options['Folder']) if File.startswith(Prefix)])
+            return len([File for File in os.listdir(self._Options.Folder) if File.startswith(Prefix)])
         except Exception as Error: return 0
 
     @property

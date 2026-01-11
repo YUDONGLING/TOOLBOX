@@ -66,7 +66,7 @@ def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | list
         Hed = {
             'User-Agent': Options['User-Agent']
         }
-        Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()
 
         if Rsp['Status'] != 0:
             raise Exception(f'HTTP DNS Query Failed, Status is {Rsp["Status"]}, Response is {Rsp}')
@@ -106,8 +106,8 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
     Options = MergeDictionaries(DftOpts, Options)
 
     Provider = None
-    if '.' in Ip and re.match(r'^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$', Ip): Provider = Options['Provider_V4']
-    if ':' in Ip and re.match(r'^([\da-fA-F]{1,4}:){6}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^::([\da-fA-F]{1,4}:){0,4}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:):([\da-fA-F]{1,4}:){0,3}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){2}:([\da-fA-F]{1,4}:){0,2}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){3}:([\da-fA-F]{1,4}:){0,1}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){4}:((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$|^:((:[\da-fA-F]{1,4}){1,6}|:)$|^[\da-fA-F]{1,4}:((:[\da-fA-F]{1,4}){1,5}|:)$|^([\da-fA-F]{1,4}:){2}((:[\da-fA-F]{1,4}){1,4}|:)$|^([\da-fA-F]{1,4}:){3}((:[\da-fA-F]{1,4}){1,3}|:)$|^([\da-fA-F]{1,4}:){4}((:[\da-fA-F]{1,4}){1,2}|:)$|^([\da-fA-F]{1,4}:){5}:([\da-fA-F]{1,4})?$|^([\da-fA-F]{1,4}:){6}:$', Ip): Provider = Options['Provider_V6']
+    if '.' in Ip and re.match(r'^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$', Ip): Provider = Options.Provider_V4
+    if ':' in Ip and re.match(r'^([\da-fA-F]{1,4}:){6}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^::([\da-fA-F]{1,4}:){0,4}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:):([\da-fA-F]{1,4}:){0,3}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){2}:([\da-fA-F]{1,4}:){0,2}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){3}:([\da-fA-F]{1,4}:){0,1}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){4}:((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$|^:((:[\da-fA-F]{1,4}){1,6}|:)$|^[\da-fA-F]{1,4}:((:[\da-fA-F]{1,4}){1,5}|:)$|^([\da-fA-F]{1,4}:){2}((:[\da-fA-F]{1,4}){1,4}|:)$|^([\da-fA-F]{1,4}:){3}((:[\da-fA-F]{1,4}){1,3}|:)$|^([\da-fA-F]{1,4}:){4}((:[\da-fA-F]{1,4}){1,2}|:)$|^([\da-fA-F]{1,4}:){5}:([\da-fA-F]{1,4})?$|^([\da-fA-F]{1,4}:){6}:$', Ip): Provider = Options.Provider_V6
     if Provider not in ['Bt', 'Zx', 'Btv', 'Ldd', 'Ipa', 'Ips', 'Mei', 'Dashi']: return '未知 未知'
 
     Location = [''] * 6     # 国家, 省份, 城市, 区县, 地址, 网络
@@ -163,7 +163,7 @@ def __QueryIpLocation_Bt(Ip: str, Options: dict) -> list:
             'User-Agent'     : 'BT-Panel',
             'X-Forwarded-For': Ip
         }
-        Rsp = requests.get(Url, headers= Hed, timeout = Options['Timeout']).json()[Ip]
+        Rsp = requests.get(Url, headers= Hed, timeout = Options.Timeout).json()[Ip]
 
         return [Rsp['country'], Rsp['province'], Rsp['city'], Rsp['region'], '', Rsp['carrier']]
     except Exception as Error:
@@ -189,7 +189,7 @@ def __QueryIpLocation_Zx(Ip: str, Options: dict) -> list:
             'X-Forwarded-For' : Ip,
             'X-Requested-With': 'XMLHttpRequest'
         }
-        Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()['data']
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
 
         return (re.sub(r'\s+', ' ', Rsp['country'].replace('–', ' ').replace('\t', ' ')).split(' ') + [''] * 5)[:5] + [Rsp['local']]
     except Exception as Error:
@@ -218,7 +218,7 @@ def __QueryIpLocation_Btv(Ip: str, Options: dict) -> list:
             'User-Agent'     : Options['User-Agent'],
             'X-Forwarded-For': Ip
         }
-        Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()['data']
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
 
         return [Rsp['country'], Rsp['province'], Rsp['city'], '', '', Rsp['isp'].upper()]
     except Exception as Error:
@@ -250,7 +250,7 @@ def __QueryIpLocation_Ldd(Ip: str, Options: dict) -> list:
         Dat = {
             'ip': Ip
         }
-        Rsp = requests.post(Url, headers = Hed, json = Dat, timeout = Options['Timeout']).json()['data']
+        Rsp = requests.post(Url, headers = Hed, json = Dat, timeout = Options.Timeout).json()['data']
 
         return [Rsp['nation'], Rsp['province'], Rsp['city'], Rsp['area'], Rsp['address'], Rsp['type']]
     except Exception as Error:
@@ -278,7 +278,7 @@ def __QueryIpLocation_Ipa(Ip: str, Options: dict) -> list:
             'User-Agent'     : Options['User-Agent'],
             'X-Forwarded-For': Ip
         }
-        Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()
 
         return [Rsp['country'], Rsp['regionName'], Rsp['city'], '', '', Rsp['isp'] + Rsp['as'] + Rsp['org'] if Rsp['country'] == '中国' else Rsp['isp']]
     except Exception as Error:
@@ -307,7 +307,7 @@ def __QueryIpLocation_Ips(Ip: str, Options: dict) -> list:
             'User-Agent'               : Options['User-Agent'],
             'X-Forwarded-For'          : Ip
         }
-        Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout'], allow_redirects = False).text
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout, allow_redirects = False).text
 
         __1 = re.search(r'<td class="th">归属地</td>[\s\S]*?<span>(.*?)</span>', Rsp); __1 = re.sub(r'<a.*?>(.*?)</a>|\s+', lambda m: m.group(1) if m.group(1) else ' ', __1.group(1)) if __1 else ''
         __2 = re.search(r'<td class="th">运营商</td>[\s\S]*?<span>(.*?)</span>', Rsp)
@@ -339,13 +339,13 @@ def __QueryIpLocation_Mei(Ip: str, Options: dict) -> list:
             'User-Agent'     : Options['User-Agent'],
             'X-Forwarded-For': Ip
         }
-        Rsp_Locate = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()['data']
+        Rsp_Locate = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
     except Exception as Error:
         return [''] * 6
 
     try:
         Url = base64.b64decode('LWh0dHBzOi8vYXBpbW9iaWxlLm1laXR1YW4uY29tL2dyb3VwL3YxL2NpdHkvbGF0bG5nLw=='.encode()).decode()[1:] + '%s,%s' % (Rsp_Locate['lat'], Rsp_Locate['lng']) + base64.b64decode('LT90YWc9MA=='.encode()).decode()[1:]
-        Rsp_Latlng = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()['data']
+        Rsp_Latlng = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
         try:    return [Rsp_Latlng['country'], Rsp_Latlng['province'], Rsp_Latlng['city'], Rsp_Latlng['district'], ('%s (%s)' % (Rsp_Latlng['areaName'].strip(), Rsp_Latlng['detail'].strip())).removesuffix(' ()'), '']
         except: return [Rsp_Locate['rgeo']['country'], Rsp_Locate['rgeo']['province'], Rsp_Locate['rgeo']['city'], Rsp_Locate['rgeo'].get('district', ''), '', '']
     except Exception as Error:
@@ -374,7 +374,7 @@ def __QueryIpLocation_Dashi(Ip: str, Options: dict) -> list:
             'User-Agent'               : Options['User-Agent'],
             'X-Forwarded-For'          : Ip
         }
-        Rsp = requests.get(Url, headers = Hed, timeout = Options['Timeout']).json()['result']
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['result']
 
         return [Rsp['country'].replace('UNKNOWN', ''), Rsp['province'].replace('UNKNOWN', ''), Rsp['city'].replace('UNKNOWN', ''), '', '', (Rsp['isp'] + Rsp['org']).replace('UNKNOWN', '') if Rsp['country'] == '中国' else Rsp['isp'].replace('UNKNOWN', '')]
     except Exception as Error:
