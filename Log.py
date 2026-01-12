@@ -54,9 +54,9 @@ def MakeErrorMessage(Error: Exception) -> str:
         Modu = os.path.relpath(
             Error.__traceback__.tb_frame.f_code.co_filename,
             start = os.path.dirname(os.path.abspath(sys.argv[0]))
-        )
-        Func = 'Function <%s>' % Error.__traceback__.tb_frame.f_code.co_name
-        Line = Error.__traceback__.tb_lineno
+          ) or 'N/A'
+        Func = ('Function <%s>' % Error.__traceback__.tb_frame.f_code.co_name).replace('Function <>', 'N/A')
+        Line = Error.__traceback__.tb_lineno or 'N/A'
     else:
         Modu = 'N/A'
         Func = 'N/A'

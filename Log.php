@@ -61,9 +61,9 @@ function MakeLog(string $Content, string $Path = "Log/{{YYYY}}-{{MM}}-{{DD}}.txt
  */
 function MakeErrorMessage(Exception $Error): string {
     if ($Error->getFile() && $Error->getLine()) {
-        $Modu = basename($Error->getFile());
-        $Func = "Function <" . $Error->getTrace()[0]["function"] . ">";
-        $Line = $Error->getLine();
+        $Modu = str_replace(getcwd() . DIRECTORY_SEPARATOR, "", $Error->getFile()) ?: "N/A";
+        $Func = isset($Error->getTrace()[0]["function"]) ? "Function <" . $Error->getTrace()[0]["function"] . ">" : "N/A";
+        $Line = $Error->getLine() ?: "N/A";
     } else {
         $Modu = "N/A";
         $Func = "N/A";
