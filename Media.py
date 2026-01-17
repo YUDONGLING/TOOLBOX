@@ -14,15 +14,13 @@ def __GetLocal(Path: str, Options: dict = None) -> dict:
     import cv2
 
     if not __package__:
-          from  Log import MakeErrorMessage
-    else: from .Log import MakeErrorMessage
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
-        'Height': -1,
-        'Width' : -1,
-        'Size'  : -1
-    }
+        'Height': -1, 'Width' : -1, 'Size'  : -1
+    })
 
     try:
         Response['Size'] = os.path.getsize(Path)
@@ -49,8 +47,8 @@ def __GetOnline(Path: str, Options: dict = None) -> dict:
     import cv2
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Download import HeadUrl
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Download import HeadUrl
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Download import HeadUrl
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Download import HeadUrl
 
     DftOpts = {
         'Header' : {
@@ -65,12 +63,10 @@ def __GetOnline(Path: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
-        'Height': -1,
-        'Width' : -1,
-        'Size'  : -1
-    }
+        'Height': -1, 'Width' : -1, 'Size'  : -1
+    })
 
     try:
         Head = HeadUrl(Path, Options)
@@ -104,14 +100,14 @@ def MakeThumbnail(Path: str, Options: dict = None) -> dict:
     import os
 
     if not __package__:
-          from  Log import MakeErrorMessage
-    else: from .Log import MakeErrorMessage
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
         'Path': '',
         'Size': -1
-    }
+    })
 
     try:
         if os.path.splitext(Path)[-1].upper() in ['.BLP', '.BMP', '.DDS', '.DIB', '.EPS', '.GIF', '.ICO', '.IM', '.JPG', '.JPEG', '.JFIF', '.J2K', '.J2P', '.JPX', '.MSP', '.PCX', '.PNG', '.APNG', '.PPM', '.SPIDER', '.TGA', '.TIFF', '.TIF', '.WEBP', '.XBM', '.CUR', '.DCX', '.FITS', '.FLI', '.FLC', '.FPX', '.FTEX', '.GBR', '.GD', '.IMT', '.IPTC', '.NAA', '.MCIDAS', '.MIC', '.MPO', '.PCD', '.PIXAR', '.PSD', '.SUN', '.WAL', '.EMF', '.XPM']:
@@ -139,8 +135,8 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
     import pillow_heif
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  UUID import TimeUUID
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .UUID import TimeUUID
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  UUID import TimeUUID
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .UUID import TimeUUID
 
     DftOpts = {
         'Path'     : '%s-%s.jpg' % (Path, TimeUUID()),
@@ -150,11 +146,11 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
         'Path': '',
         'Size': -1
-    }
+    })
 
     try:
         if os.path.dirname(Options.Path):
@@ -215,8 +211,8 @@ def __MakeThumbnail_CV2(Path: str, Options: dict = None) -> dict:
     import cv2
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  UUID import TimeUUID
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .UUID import TimeUUID
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  UUID import TimeUUID
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .UUID import TimeUUID
 
     DftOpts = {
         'Path'     : '%s-%s.jpg' % (Path, TimeUUID()),
@@ -226,11 +222,11 @@ def __MakeThumbnail_CV2(Path: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
         'Path': '',
         'Size': -1
-    }
+    })
 
     try:
         if os.path.dirname(Options.Path):
@@ -273,8 +269,8 @@ def __MakeThumbnail_FITZ(Path: str, Options: dict = None) -> dict:
     import PIL.Image
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  UUID import TimeUUID
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .UUID import TimeUUID
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  UUID import TimeUUID
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .UUID import TimeUUID
 
     DftOpts = {
         'Path'     : '%s-%s.jpg' % (Path, TimeUUID()),
@@ -284,11 +280,11 @@ def __MakeThumbnail_FITZ(Path: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
         'Path': '',
         'Size': -1
-    }
+    })
 
     try:
         if os.path.dirname(Options.Path):

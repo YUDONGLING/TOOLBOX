@@ -6,12 +6,12 @@ def CreateDB(Path: str) -> dict:
     import sqlite3
 
     if not __package__:
-          from  Log import MakeErrorMessage
-    else: from .Log import MakeErrorMessage
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
 
-    Response = {
-        'Ec': 0, 'Em': '', 'Path': ''
-    }
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
 
     try:
         if os.path.dirname(Path):
@@ -22,7 +22,7 @@ def CreateDB(Path: str) -> dict:
     try:
         Conn = sqlite3.connect(Path)
         Conn.close()
-        Response['Path'] = Path
+        Response['Result'] = Path
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 
@@ -36,12 +36,12 @@ def ExecuteDB(Path: str, Query: str, Param: tuple = None) -> dict:
     import sqlite3
 
     if not __package__:
-          from  Log import MakeErrorMessage
-    else: from .Log import MakeErrorMessage
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
 
-    Response = {
-        'Ec': 0, 'Em': '', 'Data': []
-    }
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
 
     try:
         Conn   = sqlite3.connect(Path)
@@ -54,7 +54,7 @@ def ExecuteDB(Path: str, Query: str, Param: tuple = None) -> dict:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        Response['Data'] = Cursor.fetchall()
+        Response['Result'] = Cursor.fetchall()
     except Exception as Error:
         if Conn:
             try: Conn.close()

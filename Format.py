@@ -5,8 +5,8 @@ def SafePath(Path: str, Options: dict = None) -> dict:
     import re
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'MaxLength'   : 50,
@@ -14,17 +14,16 @@ def SafePath(Path: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
-        'Ec': 0, 'Em': '',
-        'Path': ''
-    }
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
 
     try:
         for Rule in Options.ForceReplace:
             if isinstance(Rule, (list, tuple)) and len(Rule) == 2:
                 if isinstance(Rule[0], str) and isinstance(Rule[1], str):
                     Path = Path.replace(Rule[0], Rule[1])
-        Response['Path'] = re.sub(r'\s+', ' ', re.sub(r'[\\/:*?"<>|\n]', ' ', Path)).lstrip()[:Options.MaxLength].rstrip()
+        Response['Result'] = re.sub(r'\s+', ' ', re.sub(r'[\\/:*?"<>|\n]', ' ', Path)).lstrip()[:Options.MaxLength].rstrip()
     except Exception as Error:
         Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
     
@@ -41,8 +40,8 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
     '''
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Format': '{{Size}} {{Unit}}',
@@ -50,10 +49,9 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
-        'Ec': 0, 'Em': '',
-        'Result': ''
-    }
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
 
     Units   = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
     Weights = { Name: Index for Index, Name in enumerate(Units)}
