@@ -7,7 +7,7 @@ def CreateDB(Path: str) -> dict:
 
     if not __package__:
           from  Init import DotAccessDict; from  Log import MakeErrorMessage
-    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
@@ -37,7 +37,7 @@ def ExecuteDB(Path: str, Query: str, Param: tuple = None) -> dict:
 
     if not __package__:
           from  Init import DotAccessDict; from  Log import MakeErrorMessage
-    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None

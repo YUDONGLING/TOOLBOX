@@ -13,7 +13,7 @@ def MakeLog(Content: str, Path: str = 'Log/{{YYYY}}-{{MM}}-{{DD}}.txt') -> dict:
 
     if not __package__:
           from  Init import DotAccessDict
-    else: from  Init import DotAccessDict
+    else: from .Init import DotAccessDict
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None

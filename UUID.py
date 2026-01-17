@@ -36,7 +36,7 @@ def TimeUUID_Sort(Path: str, Separator: str = None) -> dict:
 
     if not __package__:
           from  Init import DotAccessDict; from  Log import MakeErrorMessage
-    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': []
@@ -69,7 +69,7 @@ def TimeUUID_Decode(UUID: str, Separator: str = None) -> dict:
     '''
     if not __package__:
           from  Init import DotAccessDict; from  Log import MakeErrorMessage
-    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': -1
