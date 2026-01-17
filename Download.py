@@ -7,8 +7,8 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
     import requests
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Header' : {
@@ -23,7 +23,7 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
         'Code'    : -1,
         'Url'     : '',
@@ -31,7 +31,7 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
         'Content-Type'    : '',
         'Content-Length'  : -1,
         'Last-Modified-At': -1
-    }
+    })
 
     try:
         Response['Url'] = ('&' if '?' in Url else '?').join([Url, '&'.join([f'{Key}={Value}' for Key, Value in Options.Params.items()])]) if Options.Params else Url
@@ -80,8 +80,8 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
     import os
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Header' : {
@@ -103,7 +103,7 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
         'Size'    : -1,
         'Code'    : -1,
@@ -112,7 +112,7 @@ def DownloadUrl(Url: str, Path: str, Options: dict = None) -> dict:
         'Content-Type'    : '',
         'Content-Length'  : -1,
         'Last-Modified-At': -1
-    }
+    })
 
     try:
         Head = HeadUrl(Url, Options); Response.update({Key: Value for Key, Value in Head.items() if Key not in ['Ec', 'Em', 'Size']})
@@ -172,8 +172,8 @@ def __GetFileViaRequests(Url: str, Path: str, Options: dict = None) -> dict:
     import requests
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Header' : {
@@ -188,9 +188,9 @@ def __GetFileViaRequests(Url: str, Path: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Size': -1
-    }
+    })
 
     try:
         Rsp = requests.get(Url,
@@ -225,8 +225,8 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
     from DownloadKit import DownloadKit
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Header' : {
@@ -247,9 +247,9 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Size': -1
-    }
+    })
 
     try:
         Kit = DownloadKit(); Kit.block_size = Options['DownloadKit.Block']

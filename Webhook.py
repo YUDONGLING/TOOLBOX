@@ -28,12 +28,12 @@ def DingTalk(Token: str, Topic: str = '', Message: list = None) -> dict:
     import requests
 
     if not __package__:
-          from  Log import MakeErrorMessage
-    else: from .Log import MakeErrorMessage
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': ''
-    }
+    })
 
     if Message == None: Message = []
 

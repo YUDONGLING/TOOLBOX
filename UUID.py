@@ -35,12 +35,12 @@ def TimeUUID_Sort(Path: str, Separator: str = None) -> dict:
     import os
 
     if not __package__:
-          from  Log import MakeErrorMessage
-    else: from .Log import MakeErrorMessage
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
 
-    Response = {
-        'Ec': 0, 'Em': '', 'Files': []
-    }
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': []
+    })
 
     try:
         Files = os.listdir(Path)
@@ -51,12 +51,12 @@ def TimeUUID_Sort(Path: str, Separator: str = None) -> dict:
         Metas = []
         for File in Files:
             _ = TimeUUID_Decode(File, Separator)
-            if _['Ec'] == 0: Metas.append({'Time': _['Time'], 'Name': File, 'Path': os.path.join(Path, File)})
+            if _['Ec'] == 0: Metas.append({'Time': _['Result'], 'Name': File, 'Path': os.path.join(Path, File)})
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
     
     try:
-        Response['Files'] = sorted(Metas, key = lambda Info: Info['Time'])
+        Response['Result'] = sorted(Metas, key = lambda Info: Info['Time'])
     except Exception as Error:
         Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
     
@@ -68,12 +68,12 @@ def TimeUUID_Decode(UUID: str, Separator: str = None) -> dict:
     Decode a UUID-like String to a Timestamp.
     '''
     if not __package__:
-          from  Log import MakeErrorMessage
-    else: from .Log import MakeErrorMessage
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
 
-    Response = {
-        'Ec': 0, 'Em': '', 'Time': -1
-    }
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': -1
+    })
 
     try:
         if Separator is None:
@@ -97,7 +97,7 @@ def TimeUUID_Decode(UUID: str, Separator: str = None) -> dict:
         for _ in range(0, len(UUID) - 2, 3):
             Hexa  = int(UUID[_: _ + 3], 16)
             Time += chr(Hexa // ((Seed[0] % 8 + 1) * (Seed[1] % 8 + 1)))
-        Response['Time'] = int(Time)
+        Response['Result'] = int(Time)
     except Exception as Error:
         Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
 

@@ -126,8 +126,8 @@ def SignUrl(Method: str, Key: str, Header: dict = None, Param: dict = None, Expi
     import urllib.parse
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
         'Region'  : '',
@@ -139,14 +139,14 @@ def SignUrl(Method: str, Key: str, Header: dict = None, Param: dict = None, Expi
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
         'Url': {
             'Http'   : '',
             'Https'  : '',
             'NoSheme': ''
         }
-    }
+    })
 
     try:
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:
@@ -211,8 +211,8 @@ def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict =
     from oss2.exceptions import NotFound
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
         'Region'  : '',
@@ -224,9 +224,9 @@ def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict =
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
-    }
+    })
 
     try:
         if Key is None and Url is None:
@@ -307,8 +307,8 @@ def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = N
     from oss2 import resumable_download
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
         'Region'  : '',
@@ -323,9 +323,9 @@ def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = N
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
-    }
+    })
 
     try:
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:
@@ -378,8 +378,8 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
     from oss2 import AnonymousAuth
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
         'Region'  : '',
@@ -391,9 +391,9 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
-    }
+    })
 
     try:
         if Key is None and Url is None:
@@ -470,8 +470,8 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: ca
     from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
         'Region'    : '',
@@ -485,9 +485,9 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: ca
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
-    }
+    })
 
     def Callback(Monitor):
         if ProgressCallback: ProgressCallback(Monitor.bytes_read, Monitor.len)
@@ -555,8 +555,8 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
     from oss2 import resumable_upload
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
         'Region'  : '',
@@ -571,9 +571,9 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
-    }
+    })
 
     try:
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:
@@ -621,8 +621,8 @@ def AppendObject(Key: str, Path: str = None, Data: str = None, Header: dict = No
     from oss2.exceptions import NotFound
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
         'Region'  : '',
@@ -634,9 +634,9 @@ def AppendObject(Key: str, Path: str = None, Data: str = None, Header: dict = No
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
-    }
+    })
 
     try:
         if Path is None and Data is None:
@@ -693,8 +693,8 @@ def DeleteObject(Key: str | list, Header: dict = None, Param: dict = None, Optio
     Delete Object from OSS Bucket.
     '''
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage; from  Aliyun import __EndPoint
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
         'Region'  : '',
@@ -706,9 +706,9 @@ def DeleteObject(Key: str | list, Header: dict = None, Param: dict = None, Optio
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
-    }
+    })
 
     try:
         if [_Key for _Key in ['Region', 'Bucket', 'AK', 'SK'] if not Options[_Key]]:

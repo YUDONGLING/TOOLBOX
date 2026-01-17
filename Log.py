@@ -11,9 +11,13 @@ def MakeLog(Content: str, Path: str = 'Log/{{YYYY}}-{{MM}}-{{DD}}.txt') -> dict:
     import time
     import portalocker
 
-    Response = {
-        'Ec': 0, 'Em': '', 'Path': ''
-    }
+    if not __package__:
+          from  Init import DotAccessDict
+    else: from  Init import DotAccessDict
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
 
     TimeConst = time.localtime()
 
@@ -36,7 +40,7 @@ def MakeLog(Content: str, Path: str = 'Log/{{YYYY}}-{{MM}}-{{DD}}.txt') -> dict:
     try:
         with portalocker.Lock(Path, 'a', encoding = 'utf-8') as File:
             File.write('[%s] %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S', TimeConst), Content))
-        Response['Path'] = Path
+        Response['Result'] = Path
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
 

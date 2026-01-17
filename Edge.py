@@ -5,8 +5,8 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
     import selenium.webdriver
 
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'DriverPath'   : r'G:\TOOLBOX\EdgeDriver\msedgedriver.exe',
@@ -15,21 +15,17 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
-        'Ec': 0, 'Em': '',
-        'Driver' : None,
-        'Private': True
-    }
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
 
     try:
         EdgeOptions = selenium.webdriver.EdgeOptions()
 
         if Private:
             EdgeOptions.add_argument('--inprivate')
-            Response['Private'] = True
         else:
             EdgeOptions.add_argument('--user-data-dir=' + Options.UserDataPath)
-            Response['Private'] = False
 
         EdgeOptions.add_argument('--window-size=800,600')
         EdgeOptions.add_argument('--no-sandbox')
@@ -43,7 +39,7 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        Response['Driver'] = selenium.webdriver.Edge(
+        Response['Result'] = selenium.webdriver.Edge(
             service = selenium.webdriver.edge.service.Service(executable_path = Options.DriverPath),
             options = EdgeOptions
         )
@@ -58,12 +54,12 @@ def CloseBrowser(Driver: object) -> dict:
     Close the Browser (Force Quit).
     '''
     if not __package__:
-          from  Log import MakeErrorMessage
-    else: from .Log import MakeErrorMessage
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': ''
-    }
+    })
 
     try:
         Driver.quit()
@@ -78,8 +74,8 @@ def OpenUrl(Driver: object, Url: str, Options: dict = None) -> dict:
     Open a URL.
     '''
     if not __package__:
-          from  Init import MergeDictionaries; from  Log import MakeErrorMessage
-    else: from .Init import MergeDictionaries; from .Log import MakeErrorMessage
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'ExpectedCondition': False,
@@ -88,11 +84,11 @@ def OpenUrl(Driver: object, Url: str, Options: dict = None) -> dict:
     }
     Options = MergeDictionaries(DftOpts, Options)
 
-    Response = {
+    Response = DotAccessDict({
         'Ec': 0, 'Em': '',
         'Source': '',
         'Cookie': []
-    }
+    })
 
     try:
         Driver.get(Url)
