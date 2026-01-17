@@ -15,7 +15,7 @@ def __GetLocal(Path: str, Options: dict = None) -> dict:
 
     if not __package__:
           from  Init import DotAccessDict; from  Log import MakeErrorMessage
-    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '',
@@ -101,7 +101,7 @@ def MakeThumbnail(Path: str, Options: dict = None) -> dict:
 
     if not __package__:
           from  Init import DotAccessDict; from  Log import MakeErrorMessage
-    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '',

@@ -29,7 +29,7 @@ def DingTalk(Token: str, Topic: str = '', Message: list = None) -> dict:
 
     if not __package__:
           from  Init import DotAccessDict; from  Log import MakeErrorMessage
-    else: from  Init import DotAccessDict; from .Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': ''
