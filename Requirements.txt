@@ -10,6 +10,7 @@ oss2==2.18.4
 Pillow==11.3.0
 pillow_heif==1.1.0
 portalocker==2.8.2
+croniter==6.0.0
 requests==2.31.0
 requests_toolbelt==1.0.0
 selenium==4.15.2
