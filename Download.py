@@ -271,12 +271,13 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
         if Options['DownloadKit.ShowDownloading']:
             print(f'\r{Options["DownloadKit.ShowDownloading.Prefix"]}0.00 %{Options["DownloadKit.ShowDownloading.Suffix"]}', end = '')
 
-            while Tsk.rate == None or Tsk.rate == 0.0:
-                if Timer >= 10:
-                    Tsk.cancel()
-                    raise Exception('Connecting Timeout')
-                Timer += 1
-                time.sleep(1)
+            if Tsk.size:
+                while Tsk.rate == None or Tsk.rate == 0.0:
+                    if Timer >= 10:
+                        Tsk.cancel()
+                        raise Exception('Connecting Timeout')
+                    Timer += 1
+                    time.sleep(1)
 
             while True:
                 print(f'\r{Options["DownloadKit.ShowDownloading.Prefix"]}{Tsk.rate} %{Options["DownloadKit.ShowDownloading.Suffix"]}', end = '     ')
@@ -286,12 +287,13 @@ def __GetFileViaDownloadKit(Url: str, Path: str, Options: dict = None) -> dict:
                     time.sleep(0.1)
 
         else:
-            while Tsk.rate == None or Tsk.rate == 0.0:
-                if Timer >= 10:
-                    Tsk.cancel()
-                    raise Exception('Connecting Timeout')
-                Timer += 1
-                time.sleep(1)
+            if Tsk.size:
+                while Tsk.rate == None or Tsk.rate == 0.0:
+                    if Timer >= 10:
+                        Tsk.cancel()
+                        raise Exception('Connecting Timeout')
+                    Timer += 1
+                    time.sleep(1)
             Tsk.wait(show = False)
 
         if Tsk.result == 'success':
