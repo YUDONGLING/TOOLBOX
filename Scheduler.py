@@ -34,7 +34,7 @@ class Scheduler(object):
 
                     if _Run:
                         _Config['LastRunBy'] = Now
-                        threading.Thread(target = self._Execute, args = (_Config), daemon = True).start()
+                        threading.Thread(target = self._Execute, args = (_Config,), daemon = True).start()
             time.sleep(1)
 
     def _Execute(self, _Config):
