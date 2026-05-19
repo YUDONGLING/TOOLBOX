@@ -168,8 +168,15 @@ def ReloadConfig(Path: str = None) -> DotAccessDict:
         Path = os.path.join(os.path.dirname(sys.executable), 'ExeConfig.json') if getattr(sys, 'frozen', False) else \
                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ExeConfig.json')
 
-    _ConfigCache['ExeConfig'] = ReadConfig(Path)
-    return _ConfigCache['ExeConfig']
+    NewConfig = ReadConfig(Path)
+    Cached = _ConfigCache.get('ExeConfig')
+    if isinstance(Cached, dict):
+        Cached.clear()
+        Cached.update(NewConfig)
+        return Cached
+
+    _ConfigCache['ExeConfig'] = NewConfig
+    return NewConfig
 
 
 def ReadEnvironVar(Path: str = None) -> DotAccessDict:
@@ -271,5 +278,12 @@ def ReloadEnvironVar(Path: str = None) -> DotAccessDict:
         Path = os.path.join(os.path.dirname(sys.executable), 'EnvironVariable.json' or 'EnvironVariable_AES.json') if getattr(sys, 'frozen', False) else \
                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'EnvironVariable.json' or 'EnvironVariable_AES.json')
 
-    _ConfigCache['EnvironVar'] = ReadEnvironVar(Path)
-    return _ConfigCache['EnvironVar']
+    NewEnv = ReadEnvironVar(Path)
+    Cached = _ConfigCache.get('EnvironVar')
+    if isinstance(Cached, dict):
+        Cached.clear()
+        Cached.update(NewEnv)
+        return Cached
+
+    _ConfigCache['EnvironVar'] = NewEnv
+    return NewEnv
