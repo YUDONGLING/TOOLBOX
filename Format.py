@@ -67,10 +67,10 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
     try:
         SizeInBytes = Size * (1024 ** Weights[Unit])
 
-        for Unit in Units:
-            Sizes[Unit] = SizeInBytes / (1024 ** Weights[Unit])
+        for _Unit in Units:
+            Sizes[_Unit] = SizeInBytes / (1024 ** Weights[_Unit])
 
-        AutoUnit = [Unit for Unit in Units[1:] if Sizes[Unit] >= 1]
+        AutoUnit = [_Unit for _Unit in Units[1:] if Sizes[_Unit] >= 1]
         AutoUnit = AutoUnit[-1] if AutoUnit else 'B'
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
@@ -78,10 +78,10 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
     try:
         Result = Options.Format.replace('{{Size}}', f'{Sizes[AutoUnit]:.{Options.Place_After_Decimal_Point}f}').replace('{{Unit}}', AutoUnit)
 
-        for Unit in Units:
+        for _Unit in Units:
             Result = Result.replace(
-                '{{Size:%s}}' % Unit, f'{Sizes[Unit]:.{Options.Place_After_Decimal_Point}f}'
-            ).replace('{{Unit:%s}}' % Unit, Unit)
+                '{{Size:%s}}' % _Unit, f'{Sizes[_Unit]:.{Options.Place_After_Decimal_Point}f}'
+            ).replace('{{Unit:%s}}' % _Unit, _Unit)
 
         Response['Result'] = Result
     except Exception as Error:
