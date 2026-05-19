@@ -43,6 +43,7 @@ def ExecuteDB(Path: str, Query: str, Param: tuple = None) -> dict:
         'Ec': 0, 'Em': '', 'Result': None
     })
 
+    Conn = None
     try:
         Conn   = sqlite3.connect(Path)
         Cursor = Conn.cursor()
