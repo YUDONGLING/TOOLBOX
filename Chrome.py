@@ -2,6 +2,8 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
     '''
     Create a Browser.
     '''
+    import os
+    import sys
     import selenium.webdriver
 
     if not __package__:
@@ -9,9 +11,9 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
     else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
-        'DriverPath'   : r'G:\TOOLBOX\ChromeDriver\chromedriver.exe',
-        'UserDataPath' : r'G:\TOOLBOX\ChromeDriver\UserData',
-        'AntiRobotPath': r'G:\TOOLBOX\ChromeStealth.min.js'
+        'DriverPath'   : os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ChromeDriver', 'chromedriver' + ('.exe' if sys.platform == 'win32' else '')),
+        'UserDataPath' : os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ChromeDriver', 'UserData'),
+        'AntiRobotPath': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ChromeStealth.min.js')
     }
     Options = MergeDictionaries(DftOpts, Options)
 
