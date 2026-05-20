@@ -466,6 +466,7 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: ca
     Hint! Only Support to use Signed Policy and Generate Signature is NOT Available.
     '''
     import requests
+    import mimetypes
 
     from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
@@ -474,14 +475,16 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: ca
     else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage; from .Aliyun import __EndPoint
 
     DftOpts = {
-        'Region'    : '',
-        'Bucket'    : '',
-        'Policy'    : '',
-        'Permission': None,
-        'Endpoint'  : None,
-        'AK'        : '',
-        'Sign'      : '',
-        'STSToken'  : None
+        'Region'             : '',
+        'Bucket'             : '',
+        'Policy'             : '',
+        'Permission'         : None,
+        'Content-Type'       : None,
+        'Content-Disposition': None,
+        'Endpoint'           : None,
+        'AK'                 : '',
+        'Sign'               : '',
+        'STSToken'           : None
     }
     Options = MergeDictionaries(DftOpts, Options)
 
@@ -515,24 +518,19 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, ProgressCallback: ca
         Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
-        Encoder = MultipartEncoder(fields = {
+        Fields  = {Key: Value for Key, Value in {
             'bucketName'          : Options.Bucket,
             'key'                 : Key,
+            'Content-Type'        : Options['Content-Type'],
+            'Content-Disposition' : Options['Content-Disposition'],
             'policy'              : Options.Policy,
             'Signature'           : Options.Sign,
             'OSSAccessKeyId'      : Options.AK,
             'x-oss-object-acl'    : Options.Permission,
             'x-oss-security-token': Options.STSToken,
-            'file'                : (Path, open(Path, 'rb'), 'application/octet-stream')
-        }) if Options.STSToken else MultipartEncoder(fields = {
-            'bucketName'          : Options.Bucket,
-            'key'                 : Key,
-            'policy'              : Options.Policy,
-            'Signature'           : Options.Sign,
-            'OSSAccessKeyId'      : Options.AK,
-            'x-oss-object-acl'    : Options.Permission,
-            'file'                : (Path, open(Path, 'rb'), 'application/octet-stream')
-        })
+            'file'                : (Path, open(Path, 'rb'), Options['Content-Type'] or mimetypes.guess_type(Path.lower())[0] or 'application/octet-stream')
+        }.items() if Value is not None}
+        Encoder = MultipartEncoder(fields = Fields)
         Monitor = MultipartEncoderMonitor(Encoder, Callback)
 
         Hed = Header or {}; Hed['content-type'] = Monitor.content_type
