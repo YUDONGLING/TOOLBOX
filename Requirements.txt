@@ -2,6 +2,7 @@ alibabacloud_openapi_util==0.2.2
 alibabacloud_tea_openapi==0.3.8
 alibabacloud_tea_util==0.3.11
 cryptography==41.0.1
+cos-python-sdk-v5==1.9.43
 DownloadKit==2.0.7
 fitz==0.0.1.dev2
 opencv_python==4.7.0.72
