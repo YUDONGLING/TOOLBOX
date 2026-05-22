@@ -16,3 +16,4 @@ requests==2.31.0
 requests_toolbelt==1.0.0
 selenium==4.15.2
 tqdm==4.64.1
+tos==2.9.0
