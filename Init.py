@@ -88,7 +88,7 @@ def MergeDictionaries(Base: dict, Override: dict) -> DotAccessDict:
     Merge two Dictionaries Recursively.
     '''
     if not isinstance(Base, dict): raise TypeError('BASE MUST BE A TYPE OF DICTIONARY'.title())
-    if not isinstance(Override, dict): return DotAccessDict(Base) if isinstance(Base, dict) else Base # raise TypeError('OVERRIDE MUST BE A TYPE OF DICTIONARY'.title())
+    if not isinstance(Override, dict): return DotAccessDict(Base) # raise TypeError('OVERRIDE MUST BE A TYPE OF DICTIONARY'.title())
 
     for _Key, _Value in Override.items():
         if _Key in Base:

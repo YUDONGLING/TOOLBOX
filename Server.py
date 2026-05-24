@@ -284,7 +284,7 @@ class FcWsgi(object):
         except Exception as Error:
             self._Out_Head = {'Content-Type': 'application/json'}
 
-        self._StartResponse(self._Out_Code, [(_Key, _Value) for _Key, _Value in (Header or self._Out_Head).items()])
+        self._StartResponse(self._Out_Code, [(_Key, _Value) for _Key, _Value in self._Out_Head.items()])
 
         self._T3 = int(time.time() * 1000) # T3: Time @ Sending the Response (Millisecond)
       # self._T4 = -1                      # T4: Time @ Destroy the Instance (Millisecond)
