@@ -33,9 +33,8 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
         EdgeOptions.add_argument('--no-sandbox')
         EdgeOptions.add_argument('--disable-gpu')
         EdgeOptions.add_argument('--disable-dev-shm-usage')
-        EdgeOptions.add_experimental_option('excludeSwitches', ['enable-automation'])
+        EdgeOptions.add_experimental_option('excludeSwitches', ['enable-automation', 'enable-logging'])
         EdgeOptions.add_experimental_option('useAutomationExtension', False)
-        EdgeOptions.add_experimental_option('excludeSwitches', ['enable-logging'])
         EdgeOptions.add_argument("--disable-blink-features=AutomationControlled")
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response

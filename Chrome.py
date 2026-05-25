@@ -33,9 +33,8 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
         ChromeOptions.add_argument('--no-sandbox')
         ChromeOptions.add_argument('--disable-gpu')
         ChromeOptions.add_argument('--disable-dev-shm-usage')
-        ChromeOptions.add_experimental_option('excludeSwitches', ['enable-automation'])
+        ChromeOptions.add_experimental_option('excludeSwitches', ['enable-automation', 'enable-logging'])
         ChromeOptions.add_experimental_option('useAutomationExtension', False)
-        ChromeOptions.add_experimental_option('excludeSwitches', ['enable-logging'])
         ChromeOptions.add_argument("--disable-blink-features=AutomationControlled")
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
