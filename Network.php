@@ -6,7 +6,7 @@ require_once "Log.php";
 /**
  * Query the DNS of a Host at Specific Region (Country in the World, or City of China), via HTTP DNS.
  */
-function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $Region = null, array $Options = null): string {
+function QueryDns(string $Host, string $Type = 'A', ?bool $Global = null, ?array $Region = null, ?array $Options = null): string {
     $DftOpts = [
         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
         'Provider'   => 'https://dns.alidns.com/resolve', // 'https://dns.alidns.com/resolve' By Alibaba Cloud Public DNS
@@ -22,7 +22,10 @@ function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $
             'MX' => 15, 'TXT' => 16, 'AAAA'  => 28, 'SRV' => 33, 'ANY' => 255
         ][strtoupper($Type)];
 
-        $Host = preg_replace('/^https?:\/\//', '', rtrim($Host, '/'));
+        $Host = parse_url(strpos($Host, '://') !== false ? $Host : '//' . ltrim($Host, '/'), PHP_URL_HOST) ?: '';
+        if ($Host === '') {
+            throw new Exception('Invalid Host');
+        }
     } catch (Exception $Error) {
         return '';
     }
@@ -73,6 +76,10 @@ function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $
 
             $IP = [];
             FlattenIPs($IP, $Pool);
+
+            if (empty($IP)) {
+                return '';
+            }
             $IP = $IP[array_rand($IP)];
         }
     } catch (Exception $Error) {
@@ -87,12 +94,19 @@ function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $
         $Hed = [
             'User-Agent' => $Options['User-Agent']
         ];
-        $Rsp = json_decode(file_get_contents($Url, false, stream_context_create([
+        $Rsp = file_get_contents($Url, false, stream_context_create([
             'http' => [
                 'header'  => "User-Agent: " . $Hed['User-Agent'],
                 'timeout' => $Options['Timeout']
             ]
-        ])), true);
+        ]));
+        if ($Rsp === false) {
+            throw new Exception('HTTP DNS Query Failed');
+        }
+        $Rsp = json_decode($Rsp, true);
+        if (!is_array($Rsp)) {
+            throw new Exception('HTTP DNS Response Is Invalid');
+        }
 
         if ($Rsp['Status'] != 0) {
             throw new Exception("HTTP DNS Query Failed, Status is {$Rsp['Status']}, Response is " . json_encode($Rsp));
@@ -111,7 +125,7 @@ function QueryDns(string $Host, string $Type = 'A', bool $Global = null, array $
 /**
  * Query the Location of an IP Address.
  */
-function QueryIpLocation(string $Ip, array $Options = null): string {
+function QueryIpLocation(string $Ip, ?array $Options = null): string {
     throw new Exception("Not Implemented");
 }
 

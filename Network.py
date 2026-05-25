@@ -6,6 +6,7 @@ def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | list
     import json
     import random
     import requests
+    import urllib.parse
 
     if not __package__:
           from  Init import MergeDictionaries
@@ -26,7 +27,9 @@ def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | list
             'MX': 15, 'TXT': 16, 'AAAA' : 28, 'SRV': 33, 'ANY': 255
         }[Type.upper()]
 
-        Host = Host.removeprefix('//').removeprefix('http://').removeprefix('https://').removesuffix('/')
+        Host = urllib.parse.urlsplit(Host if '://' in Host else f'//{Host}').hostname or ''
+        if not Host:
+            raise ValueError('Invalid Host')
     except Exception as Error:
         return ''
 
@@ -57,6 +60,8 @@ def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | list
                 else: Tar.append(Src)
 
             IP = []; FlattenIPs(IP, Pool)
+
+            if not IP: return ''
             IP = random.choice(IP)
     except Exception as Error:
         return ''
@@ -348,8 +353,10 @@ def __QueryIpLocation_Mei(Ip: str, Options: dict) -> list:
     try:
         Url = base64.b64decode('LWh0dHBzOi8vYXBpbW9iaWxlLm1laXR1YW4uY29tL2dyb3VwL3YxL2NpdHkvbGF0bG5nLw=='.encode()).decode()[1:] + '%s,%s' % (Rsp_Locate['lat'], Rsp_Locate['lng']) + base64.b64decode('LT90YWc9MA=='.encode()).decode()[1:]
         Rsp_Latlng = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
-        try:    return [Rsp_Latlng['country'], Rsp_Latlng['province'], Rsp_Latlng['city'], Rsp_Latlng['district'], ('%s (%s)' % (Rsp_Latlng['areaName'].strip(), Rsp_Latlng['detail'].strip())).removesuffix(' ()'), '']
-        except: return [Rsp_Locate['rgeo']['country'], Rsp_Locate['rgeo']['province'], Rsp_Locate['rgeo']['city'], Rsp_Locate['rgeo'].get('district', ''), '', '']
+
+        try: return [Rsp_Latlng['country'], Rsp_Latlng['province'], Rsp_Latlng['city'], Rsp_Latlng['district'], ('%s (%s)' % (Rsp_Latlng['areaName'].strip(), Rsp_Latlng['detail'].strip())).removesuffix(' ()'), '']
+        except (KeyError, TypeError, AttributeError):
+             return [Rsp_Locate['rgeo']['country'], Rsp_Locate['rgeo']['province'], Rsp_Locate['rgeo']['city'], Rsp_Locate['rgeo'].get('district', ''), '', '']
     except Exception as Error:
         return [''] * 6
     
@@ -374,7 +381,6 @@ def __QueryIpLocation_Red(Ip: str, Options: dict) -> list:
         Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['client_info']
         return [Rsp['country'], Rsp['province'], Rsp['city'], '', '', Rsp['isp'] + ' ' + Rsp['owner_domain']]
     except Exception as Error:
-        print(Error)
         return [''] * 6
 
 

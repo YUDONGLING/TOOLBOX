@@ -6,6 +6,17 @@ def _FindIp(Headers: dict, NameList: list, FallbackIp: str = '0.0.0.0') -> str:
     return FallbackIp
 
 
+def _ParseUrlEncoded(Data: str) -> dict:
+    import json
+    import urllib.parse
+
+    Parsed = {}
+    for _Key, _Value in urllib.parse.parse_qsl(Data or '', keep_blank_values = True):
+        try:    Parsed[_Key] = json.loads(_Value)
+        except: Parsed[_Key] = _Value
+    return Parsed
+
+
 def _ConvertSnakeCase(Body: dict) -> dict:
     def SnakeCase(Dict):
         _Dict = {}
@@ -239,13 +250,7 @@ class FcWsgi(object):
             else:
                 self.Cookie[urllib.parse.unquote(_Key_Value[0]).lower()] = ''
 
-        self.Params  = DotAccessDict({})
-        for _Key_Value in [_.split('=', 1) for _ in urllib.parse.unquote(self._Environ.get('QUERY_STRING', '')).split('&') if _]:
-            if len(_Key_Value) > 1:
-                try:    self.Params[urllib.parse.unquote(_Key_Value[0])] = json.loads(urllib.parse.unquote(_Key_Value[1]))
-                except: self.Params[urllib.parse.unquote(_Key_Value[0])] = urllib.parse.unquote(_Key_Value[1])
-            else:
-                self.Params[urllib.parse.unquote(_Key_Value[0])] = ''
+        self.Params = DotAccessDict(_ParseUrlEncoded(self._Environ.get('QUERY_STRING', '')))
 
         self.Payload = self.DecodePayload()
 
@@ -276,13 +281,13 @@ class FcWsgi(object):
 
         self._Out_Body = Body if isinstance(Body, str) else json.dumps(_ConvertSnakeCase(Body) if SnakeCase else Body, ensure_ascii = False)
         self._Out_Code = Code
-        self._Out_Size = len(self._Out_Body)
+        self._Out_Size = len(self._Out_Body.encode('utf-8'))
 
         try:
             self._Out_Head = {_Key.lower(): _Value for _Key, _Value in (Header or {}).items()}
-            self._Out_Head.setdefault('Content-Type', 'application/json')
+            self._Out_Head.setdefault('content-type', 'application/json')
         except Exception as Error:
-            self._Out_Head = {'Content-Type': 'application/json'}
+            self._Out_Head = {'content-type': 'application/json'}
 
         self._StartResponse(self._Out_Code, [(_Key, _Value) for _Key, _Value in self._Out_Head.items()])
 
@@ -303,7 +308,6 @@ class FcWsgi(object):
 
     def DecodePayload(self):
         import json
-        import urllib.parse
 
         def __DecodeJson(_):
             try:    return json.loads(_)
@@ -311,14 +315,7 @@ class FcWsgi(object):
 
         def __DecodeForm(_):
             try:
-                Form = {}
-                for _Key_Value in [_.split('=', 1) for _ in urllib.parse.unquote(_).split('&') if _]:
-                    if len(_Key_Value) > 1:
-                        try:    Form[urllib.parse.unquote(_Key_Value[0])] = json.loads(urllib.parse.unquote(_Key_Value[1]))
-                        except: Form[urllib.parse.unquote(_Key_Value[0])] = urllib.parse.unquote(_Key_Value[1])
-                    else:
-                        Form[urllib.parse.unquote(_Key_Value[0])] = ''
-                return Form
+                return _ParseUrlEncoded(_)
             except:
                 return {}
             
@@ -355,10 +352,10 @@ class FcWsgi(object):
         return __DecodeJson(_Input) or __DecodeForm(_Input) or {}
 
     async def CallLog(self, Bucket: str = None, Region: str = None):
-        return _CallLog(self, Bucket, Region)
+        return await _CallLog(self, Bucket, Region)
 
     async def CallWebhook(self, Token: str, Topic: str = None):
-        return _CallWebhook(self, Token, Topic)
+        return await _CallWebhook(self, Token, Topic)
 
 
 class FlaskWsgi(object):
@@ -488,13 +485,13 @@ class FlaskWsgi(object):
 
         self._Out_Body = Body if isinstance(Body, str) else json.dumps(_ConvertSnakeCase(Body) if SnakeCase else Body, ensure_ascii = False)
         self._Out_Code = Code
-        self._Out_Size = len(self._Out_Body)
+        self._Out_Size = len(self._Out_Body.encode('utf-8'))
 
         try:
             self._Out_Head = {_Key.lower(): _Value for _Key, _Value in (Header or {}).items()}
-            self._Out_Head.setdefault('Content-Type', 'application/json')
+            self._Out_Head.setdefault('content-type', 'application/json')
         except Exception as Error:
-            self._Out_Head = {'Content-Type': 'application/json'}
+            self._Out_Head = {'content-type': 'application/json'}
 
         self._T3 = int(time.time() * 1000) # T3: Time @ Sending the Response (Millisecond)
       # self._T4 = -1                      # T4: Time @ Destroy the Instance (Millisecond)
@@ -523,8 +520,7 @@ class FlaskWsgi(object):
         def __DecodeMultipart(_):
             try:
                 Form = {}
-                for Field in _.files:
-                    Fp = _[Field]
+                for Field, Fp in _.files.items():
                     Form[Field] = {'filename': Fp.filename, 'content': Fp.read()}
                 for Field in _.form:
                     Form[Field] = _.form[Field]
@@ -550,10 +546,10 @@ class FlaskWsgi(object):
         return __DecodeJson(self._FlaskRequest) or __DecodeForm(self._FlaskRequest) or {}
 
     async def CallLog(self, Bucket: str = None, Region: str = None):
-        return _CallLog(self, Bucket, Region)
+        return await _CallLog(self, Bucket, Region)
 
     async def CallWebhook(self, Token: str, Topic: str = None):
-        return _CallWebhook(self, Token, Topic)
+        return await _CallWebhook(self, Token, Topic)
 
 
 class FlowControl(object):

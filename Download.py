@@ -34,10 +34,11 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
     })
 
     try:
-        Response['Url'] = ('&' if '?' in Url else '?').join([Url, '&'.join([f'{Key}={Value}' for Key, Value in Options.Params.items()])]) if Options.Params else Url
+        Response['Url'] = requests.Request('GET', Url, params = Options.Params).prepare().url or Url
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
+    Rsp = None
     try:
         Rsp = requests.head(   Url,
                                headers = Options.Header,
@@ -56,10 +57,11 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
                                verify  = Options.Verify,
                                stream  = True,
                                allow_redirects = Options.AllowRedirects)
-            try: Rsp.close()
-            except: pass
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+    finally:
+        try: Rsp.close()
+        except: pass
 
     try:
         Response['Code']             = Rsp.status_code
@@ -69,6 +71,9 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
         Response['Last-Modified-At'] = int(time.mktime(time.strptime(Rsp.headers.get('Last-Modified', ''), '%a, %d %b %Y %H:%M:%S %Z'))) if 'Last-Modified' in Rsp.headers else -1
     except Exception as Error:
         Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+    finally:
+        try: Rsp.close()
+        except: pass
     
     return Response
 
@@ -192,6 +197,7 @@ def __GetFileViaRequests(Url: str, Path: str, Options: dict = None) -> dict:
         'Ec': 0, 'Em': '', 'Size': -1
     })
 
+    Rsp = None
     try:
         Rsp = requests.get(Url,
                            headers = Options.Header,
@@ -215,6 +221,9 @@ def __GetFileViaRequests(Url: str, Path: str, Options: dict = None) -> dict:
             raise Exception(f'HTTP Code is {Rsp.status_code}')
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+    finally:
+        try: Rsp.close()
+        except: pass
     
     return Response
 

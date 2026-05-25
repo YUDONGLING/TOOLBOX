@@ -23,7 +23,6 @@ def DingTalk(Token: str, Topic: str = '', Message: list = None) -> dict:
     '''
     Send Message to DingTalk Chat Group.
     '''
-    import json
     import time
     import requests
 
@@ -66,12 +65,15 @@ def DingTalk(Token: str, Topic: str = '', Message: list = None) -> dict:
                 'text' : MessageBody
             }
         }
-        Rsp = requests.post(Url, headers = Hed, data = json.dumps(Dat), timeout = 10).json()
+        Rsp = requests.post(Url, headers = Hed, json = Dat, timeout = 10).json()
 
         if Rsp.get('errcode', -1) != 0:
             raise Exception('%s-%s' % (Rsp.get('errcode', 'Unknown'), Rsp.get('errmsg', 'Unknown')))
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+    finally:
+        try: Rsp.close()
+        except: pass
 
     return Response
 

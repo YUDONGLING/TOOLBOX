@@ -31,6 +31,8 @@ def SelectOption(Items, Title = 'Select An Option', Options: dict = None):
         else:
             Parsed.append({'Value': str(Item), 'Label': str(Item)})
 
+    if not Parsed: raise ValueError('Items Must Not Be Empty')
+
     TitLine = (str(Title) + ':\r\n') if Title else ''
     SepLine = (str(Options.Seperator) * Options.MenuWidth + '\r\n') if Options.Seperator else ''
     BtmLine = f'↑/↓: Navigate{" " * (Options.MenuWidth - 26)}Enter: Select\r'

@@ -6,7 +6,7 @@ require_once "Log.php";
 /**
  * Check and Safety the Path, Return the Safety Path.
  */
-function SafePath(string $Path, array $Options = null): array {
+function SafePath(string $Path, ?array $Options = null): array {
     $DftOpts = [
         "MaxLength"    => 50,
         "ForceReplace" => []
@@ -39,7 +39,7 @@ function SafePath(string $Path, array $Options = null): array {
 /**
  * Convert the Size to Human Readable Format, Support Magic Variables for Storage Unit.
  */
-function ConvertSize(int $Size, string $Unit = "B", array $Options = null): array {
+function ConvertSize(int | float $Size, string $Unit = "B", ?array $Options = null): array {
     $DftOpts = [
         "Format" => "{{Size}} {{Unit}}",
         "Place_After_Decimal_Point" => 2
@@ -77,11 +77,11 @@ function ConvertSize(int $Size, string $Unit = "B", array $Options = null): arra
             $Sizes[$Unit] = $SizeInBytes / (1024 ** $Weights[$Unit]);
         }
 
-        AutoUnit = 'B';
+        $AutoUnit = 'B';
         for ($i = count($Units) - 1; $i >= 1; $i--) {
             $Unit = $Units[$i];
             if ($Sizes[$Unit] >= 1) {
-                AutoUnit = $Unit;
+                $AutoUnit = $Unit;
                 break;
             }
         }

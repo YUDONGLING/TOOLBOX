@@ -81,7 +81,7 @@ function MergeDictionaries(array $Base, array $Override): array {
 /**
  * Read Configuration from a JSON File.
  */
-function ReadConfig(string $Path = null): array {
+function ReadConfig(?string $Path = null): array {
     if ($Path === null) {
         $Path = dirname(__FILE__) . '/ExeConfig.json';
     }
@@ -112,7 +112,7 @@ function ReadConfig(string $Path = null): array {
 /**
  * Encrypt Configuration and Save to a JSON File.
  */
-function EncryptConfig(string $Path = null): void {
+function EncryptConfig(?string $Path = null): void {
     throw new Exception("Not Implemented"); # return SetConfig([], $Path);
 }
 
@@ -122,7 +122,7 @@ function EncryptConfig(string $Path = null): void {
  * Use `Merge = true` to Merge the Configuration with Existing Config File.
  * Use `Force = true` to Overwrite the Existing Config File (if Merge is Disabled).
  */
-function SetConfig(array $Cfg, string $Path = null, bool $Merge = true, bool $Force = false): void {
+function SetConfig(array $Cfg, ?string $Path = null, bool $Merge = true, bool $Force = false): void {
     if ($Path === null) {
         $Path = dirname(__FILE__) . '/ExeConfig.json';
     }
@@ -156,7 +156,7 @@ function SetConfig(array $Cfg, string $Path = null, bool $Merge = true, bool $Fo
 /**
  * Reload Configuration from a JSON File.
  */
-function ReloadConfig(string $Path = null): array {
+function ReloadConfig(?string $Path = null): array {
     global $_ConfigCache;
     if ($Path === null) {
         $Path = dirname(__FILE__) . '/ExeConfig.json';
@@ -168,7 +168,7 @@ function ReloadConfig(string $Path = null): array {
 /**
  * Decrypt Environment Variable from a JSON File.
  */
-function ReadEnvironVar(string $Path = null): array {
+function ReadEnvironVar(?string $Path = null): array {
     function __Decrypt__($Data, $Fernet) {
         if (is_string($Data)) {
             return $Fernet->decrypt($Data);
@@ -185,10 +185,13 @@ function ReadEnvironVar(string $Path = null): array {
         $Path = dirname(__FILE__) . '/EnvironVariable.json';
     }
 
-    $Root = pathinfo($Path, PATHINFO_FILENAME);
-    $Extension = pathinfo($Path, PATHINFO_EXTENSION);
-    $RawEnvPath = (substr($Root, -4) === "_AES" ? substr($Root, 0, -4) : $Root) . "." . $Extension;
-    $AesEnvPath = (substr($Root, -4) !== "_AES" ? $Root . "_AES" : $Root) . "." . $Extension;
+    $Directory  = pathinfo($Path, PATHINFO_DIRNAME);
+    $Root       = pathinfo($Path, PATHINFO_FILENAME);
+    $Extension  = pathinfo($Path, PATHINFO_EXTENSION);
+    $Prefix     = ($Directory && $Directory !== ".") ? $Directory . DIRECTORY_SEPARATOR : "";
+    $Suffix     = $Extension !== "" ? "." . $Extension : "";
+    $RawEnvPath = $Prefix . (substr($Root, -4) === "_AES" ? substr($Root, 0, -4) : $Root) . $Suffix;
+    $AesEnvPath = $Prefix . (substr($Root, -4) !== "_AES" ? $Root . "_AES" : $Root) . $Suffix;
 
     if (file_exists($RawEnvPath)) {
         return ReadConfig($RawEnvPath);
@@ -209,7 +212,7 @@ function ReadEnvironVar(string $Path = null): array {
 /**
  * Encrypt Environment Variable and Save to a JSON File.
  */
-function EncryptEnvironVar(string $Path = null): void {
+function EncryptEnvironVar(?string $Path = null): void {
     SetEnvironVar([], $Path);
 }
 
@@ -219,7 +222,7 @@ function EncryptEnvironVar(string $Path = null): void {
  * Use `Merge = true` to Merge the Environment Variable with Existing File.
  * Use `Force = true` to Overwrite the Existing File (if Merge is Disabled).
  */
-function SetEnvironVar(array $Env, string $Path = null, bool $Merge = true, bool $Force = false): void {
+function SetEnvironVar(array $Env, ?string $Path = null, bool $Merge = true, bool $Force = false): void {
     function __Encrypt__($Data, $Fernet) {
         if (is_string($Data)) {
             return $Fernet->encrypt($Data);
@@ -236,10 +239,13 @@ function SetEnvironVar(array $Env, string $Path = null, bool $Merge = true, bool
         $Path = dirname(__FILE__) . '/EnvironVariable.json';
     }
 
-    $Root = pathinfo($Path, PATHINFO_FILENAME);
-    $Extension = pathinfo($Path, PATHINFO_EXTENSION);
-    $RawEnvPath = (substr($Root, -4) === "_AES" ? substr($Root, 0, -4) : $Root) . "." . $Extension;
-    $AesEnvPath = (substr($Root, -4) !== "_AES" ? $Root . "_AES" : $Root) . "." . $Extension;
+    $Directory  = pathinfo($Path, PATHINFO_DIRNAME);
+    $Root       = pathinfo($Path, PATHINFO_FILENAME);
+    $Extension  = pathinfo($Path, PATHINFO_EXTENSION);
+    $Prefix     = ($Directory && $Directory !== ".") ? $Directory . DIRECTORY_SEPARATOR : "";
+    $Suffix     = $Extension !== "" ? "." . $Extension : "";
+    $RawEnvPath = $Prefix . (substr($Root, -4) === "_AES" ? substr($Root, 0, -4) : $Root) . $Suffix;
+    $AesEnvPath = $Prefix . (substr($Root, -4) !== "_AES" ? $Root . "_AES" : $Root) . $Suffix;
 
     if (file_exists($RawEnvPath)) {
         if ($Merge) {
@@ -265,7 +271,7 @@ function SetEnvironVar(array $Env, string $Path = null, bool $Merge = true, bool
 /**
  * Reload Environment Variable from a JSON File.
  */
-function ReloadEnvironVar(string $Path = null): array {
+function ReloadEnvironVar(?string $Path = null): array {
     global $_ConfigCache;
     if ($Path === null) {
         $Path = dirname(__FILE__) . '/EnvironVariable.json';

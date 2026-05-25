@@ -48,8 +48,10 @@ class PostmanRequest(object):
             raise requests.exceptions.HTTPError('Error: %s, %s' % (Response.status_code, Response.text))
 
         # Target Server Side Error
-        ResponseJson = Response.json()
-        if ResponseJson.get('Ec'.lower()) or not ResponseJson.get('Data'.lower()):
+        try: ResponseJson = Response.json()
+        finally: Response.close()
+
+        if ResponseJson.get('Ec'.lower()) or 'data' not in ResponseJson:
             ResponseEm = ResponseJson.get('Em'.lower()) or ''
             Et, Em = ResponseEm.split(': ', 1) if ': ' in ResponseEm else ('', ResponseEm)
             match Et:

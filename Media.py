@@ -33,9 +33,11 @@ def __GetLocal(Path: str, Options: dict = None) -> dict:
 
         Response['Height'] = int(Mda.get(cv2.CAP_PROP_FRAME_HEIGHT))
         Response['Width']  = int(Mda.get(cv2.CAP_PROP_FRAME_WIDTH))
-        Mda.release()
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+    finally:
+        try: Mda.release()
+        except: pass
 
     return Response
 
@@ -86,9 +88,11 @@ def __GetOnline(Path: str, Options: dict = None) -> dict:
 
         Response['Height'] = int(Mda.get(cv2.CAP_PROP_FRAME_HEIGHT))
         Response['Width']  = int(Mda.get(cv2.CAP_PROP_FRAME_WIDTH))
-        Mda.release()
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+    finally:
+        try: Mda.release()
+        except: pass
 
     return Response
 
@@ -161,34 +165,35 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
     try:
         pillow_heif.register_heif_opener()
 
-        Image = PIL.Image.open(Path).convert('RGB')
+        with PIL.Image.open(Path) as SourceImage:
+            Image = SourceImage.convert('RGB')
 
-        if Options.Size[0] <= 0 or Options.Size[1] <= 0:
-            if Options.Size[1] <= 0:                              # 按宽度等比例缩放
-                Ratio_Resize = float(Options.Size[0]) / float(Image.width)
-                Options.Size = (Options.Size[0], int(Image.height * Ratio_Resize))
-            else:                                                 # 按高度等比例缩放
-                Ratio_Resize = float(Options.Size[1]) / float(Image.height)
-                Options.Size = (int(Image.width * Ratio_Resize), Options.Size[1])
+            if Options.Size[0] <= 0 or Options.Size[1] <= 0:
+                if Options.Size[1] <= 0:                              # 按宽度等比例缩放
+                    Ratio_Resize = float(Options.Size[0]) / float(Image.width)
+                    Options.Size = (Options.Size[0], int(Image.height * Ratio_Resize))
+                else:                                                 # 按高度等比例缩放
+                    Ratio_Resize = float(Options.Size[1]) / float(Image.height)
+                    Options.Size = (int(Image.width * Ratio_Resize), Options.Size[1])
 
-            Image = Image.resize(Options.Size, PIL.Image.LANCZOS)
+                Image = Image.resize(Options.Size, PIL.Image.LANCZOS)
 
-        else:
-            Ratio_Orig = float(Image.width) / float(Image.height)
-            Ratio_Crop = float(Options.Size[0]) / float(Options.Size[1])
+            else:
+                Ratio_Orig = float(Image.width) / float(Image.height)
+                Ratio_Crop = float(Options.Size[0]) / float(Options.Size[1])
 
-            if Ratio_Orig > Ratio_Crop:
-                _      = int(Image.height * Ratio_Crop)
-                Margin = (Image.width - _) // 2
-                Image  = Image.crop((Margin, 0, Margin + _, Image.height))
-            else: 
-                _      = int(Image.width / Ratio_Crop)
-                Margin = (Image.height - _) // 2
-                Image  = Image.crop((0, Margin, Image.width, Margin + _))
+                if Ratio_Orig > Ratio_Crop:
+                    _      = int(Image.height * Ratio_Crop)
+                    Margin = (Image.width - _) // 2
+                    Image  = Image.crop((Margin, 0, Margin + _, Image.height))
+                else: 
+                    _      = int(Image.width / Ratio_Crop)
+                    Margin = (Image.height - _) // 2
+                    Image  = Image.crop((0, Margin, Image.width, Margin + _))
 
-            Image.thumbnail((min(Options.Size[0], Image.width), min(Options.Size[1], Image.height)))
+                Image.thumbnail((min(Options.Size[0], Image.width), min(Options.Size[1], Image.height)))
 
-        Image.save(Options.Path, quality = Options.Quality, format = 'JPEG')
+            Image.save(Options.Path, quality = Options.Quality, format = 'JPEG')
         Response['Path'] = Options.Path
         Response['Size'] = os.path.getsize(Options.Path)
     except Exception as Error:
@@ -241,10 +246,16 @@ def __MakeThumbnail_CV2(Path: str, Options: dict = None) -> dict:
         Pos = int(min(Mda.get(cv2.CAP_PROP_FRAME_COUNT) / (Mda.get(cv2.CAP_PROP_FPS) or 1) * 1000, 0.05 * 1000))
         Mda.set(cv2.CAP_PROP_POS_MSEC, Pos)
 
-        cv2.imwrite(Options.Path, Mda.read()[1])
-        Mda.release()
+        Success, Frame = Mda.read()
+        if not Success or Frame is None:
+            raise Exception('Couldn\'t Read Video Frame from File %s' % Path)
+
+        cv2.imwrite(Options.Path, Frame)
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+    finally:
+        try: Mda.release()
+        except: pass
 
     try:
         if Options.RemoveOrg:
@@ -292,14 +303,17 @@ def __MakeThumbnail_FITZ(Path: str, Options: dict = None) -> dict:
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
+    Pdf = None
     try:
         Pdf = fitz.open(Path)
         Img = Pdf[0].get_pixmap()
         Img = PIL.Image.frombytes('RGB', [Img.width, Img.height], Img.samples)
         Img.save(Options.Path, format = 'JPEG')
-        Pdf.close()
     except Exception as Error:
         Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+    finally:
+        try: Pdf.close()
+        except: pass
 
     try:
         if Options.RemoveOrg:

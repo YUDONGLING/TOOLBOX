@@ -29,7 +29,7 @@ class Scheduler(object):
                         if Now >= _Config['NextRunBy']:
                             _Run = True; _Config['NextRunBy'] = croniter.croniter(_Config['Cron'], Now).get_next(float)
                     else:
-                        if Now - _Config['LastRunBy'] >= _Config['Interval']:
+                        if Now >= _Config['NextRunBy']:
                             _Run = True; _Config['NextRunBy'] = Now + _Config['Interval']
 
                     if _Run:
@@ -67,8 +67,9 @@ class Scheduler(object):
 
         def Decorator(Function):
             with self._ThreadLock:
-                if Interval is None and Cron is None        : raise Exception(f'Either Interval or Cron Must Be Specified')
-                if Interval is not None and Cron is not None: raise Exception(f'Cannot Specify Both Interval and Cron')
+                if Interval is None and Cron is None        : raise Exception('Either Interval or Cron Must Be Specified')
+                if Interval is not None and Cron is not None: raise Exception('Cannot Specify Both Interval and Cron')
+                if Interval is not None and Interval <= 0   : raise Exception('Interval Must Be Greater Than 0')
 
                 if Cron is not None:
                     self.Task.append({

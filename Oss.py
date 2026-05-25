@@ -152,7 +152,7 @@ def __Sign(AK: str, SK: str, Region: str, Bucket: str, Method: str, Url: str, ST
         }
         if STSToken: Param['x-oss-security-token'] = STSToken
 
-        for _Key, _Value in [_Query.split('=', 1) if '=' in _Query else (_Query, '') for _Query in Query.split('&')]:
+        for _Key, _Value in urllib.parse.parse_qsl(Query, keep_blank_values = True):
             Param[_Key] = _Value
         Param = dict(sorted(Param.items(), key = lambda x: x[0]))
 

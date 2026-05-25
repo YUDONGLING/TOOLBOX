@@ -68,17 +68,27 @@ def AsyncCall(Function: callable, *Args, **Kwargs) -> object:
     '''
     import concurrent.futures
 
-    Thread = concurrent.futures.ThreadPoolExecutor()
+    Thread = concurrent.futures.ThreadPoolExecutor(max_workers = 1)
     Future = Thread.submit(Function, *Args, **Kwargs)
     Future.__ThreadPoolExecutor = Thread
+
+    def shutdownExecutor(_Future = None):
+        Executor = getattr(Future, '__ThreadPoolExecutor', None)
+        if Executor is None:
+            return None
+
+        Future.__ThreadPoolExecutor = None
+        Executor.shutdown(wait = False)
+        return None
 
     def waitResult():
         try:
             Result = Future.result()
         finally:
-            Future.__ThreadPoolExecutor.shutdown()
+            shutdownExecutor()
         return Result
 
+    Future.add_done_callback(shutdownExecutor)
     Future.waitResult = waitResult
     return Future
 
@@ -210,7 +220,10 @@ def ReadEnvironVar(Path: str = None) -> DotAccessDict:
     AesEnvPath = (Root + '_AES' + Extension) if not Root.endswith('_AES') else Path
     if os.path.exists(AesEnvPath):
         from cryptography.fernet import Fernet
-        return DotAccessDict(__Decrypt__(ReadConfig(AesEnvPath), Fernet(os.environ.get('AES_KEY', '').encode())))
+        AesKey = os.environ.get('AES_KEY', '')
+        if not AesKey:
+            raise EnvironmentError('Environment Variable \'AES_KEY\' Not Found'.title())
+        return DotAccessDict(__Decrypt__(ReadConfig(AesEnvPath), Fernet(AesKey.encode())))
 
     raise FileNotFoundError('FILE DOES NOT EXIST'.title())
 
