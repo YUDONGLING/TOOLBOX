@@ -199,13 +199,17 @@ def __GetFileViaRequests(Url: str, Path: str, Options: dict = None) -> dict:
                            cookies = Options.Cookie,
                            timeout = Options.Timeout,
                            verify  = Options.Verify,
+                           stream  = True,
                            allow_redirects = Options.AllowRedirects)
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
     
     try:
         if 200 <= Rsp.status_code < 300:
-            with open(Path, 'wb') as File: File.write(Rsp.content)
+            with open(Path, 'wb') as File:
+                for Chunk in Rsp.iter_content(chunk_size = 1024 * 1024):
+                    if Chunk:
+                        File.write(Chunk)
             Response['Size'] = os.path.getsize(Path)
         else:
             raise Exception(f'HTTP Code is {Rsp.status_code}')
