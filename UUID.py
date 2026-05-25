@@ -5,11 +5,15 @@ def HashUUID(Path_Or_Data: str, Separator: str = '-') -> str:
     import os
     import hashlib
 
+    Md5Hasher = hashlib.md5()
     if os.path.isfile(Path_Or_Data):
         with open(Path_Or_Data, 'rb') as File:
-            Md5 = hashlib.md5(File.read()).hexdigest()
+            for Chunk in iter(lambda: File.read(1024 * 1024), b''):
+                Md5Hasher.update(Chunk)
     else:
-        Md5 = hashlib.md5(Path_Or_Data.encode()).hexdigest()
+        Md5Hasher.update(Path_Or_Data.encode())
+
+    Md5 = Md5Hasher.hexdigest()
 
     return Separator.join([Md5[:8], Md5[8:12], Md5[12:16], Md5[16:20], Md5[20:]])
 
