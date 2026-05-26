@@ -49,18 +49,17 @@ def ExecuteDB(Path: str, Query: str, Param: tuple = None) -> dict:
         Cursor = Conn.cursor()
         Cursor.execute(Query, Param or ())
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
-    finally:
         try: Conn.close()
         except: pass
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
     try:
         Response['Result'] = Cursor.fetchall() if Cursor.description is not None else []
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
-    finally:
         try: Conn.close()
         except: pass
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+
     try:
         if Conn.in_transaction:
             Conn.commit()
