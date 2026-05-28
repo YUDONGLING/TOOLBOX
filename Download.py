@@ -5,6 +5,7 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
     '''
     import time
     import requests
+    import urllib.parse
 
     if not __package__:
           from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
@@ -34,7 +35,10 @@ def HeadUrl(Url: str, Options: dict = None) -> dict:
     })
 
     try:
-        Response['Url'] = requests.Request('GET', Url, params = Options.Params).prepare().url or Url
+        Response['Url'] = Url + (
+            (('&' if '?' in Url else '?') + urllib.parse.urlencode(Options.Params))
+            if Options.Params else ''
+        )
     except Exception as Error:
         Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
 
