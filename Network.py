@@ -87,15 +87,16 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
     '''
     Query the Location of an IP Address.
     
-    Bt   : IPv4 (国内 区县级, 国外 国家级)
-    Zx   : IPv4 (国内 城市级, 国外 国家级), IPv6 (国内 城市级, 国外 省份级)
-    Btv  : IPv4 (国内 城市级, 国外 省份级), IPv6 (国内 城市级, 国外 省份级)
-    Ldd  : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 省份级)
-    Ipa  : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
-    Ips  : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 省份级, 国外 省份级)
-    Mei  : IPv4 (国内 楼栋级, 国外 城市级), IPv6 (国内 楼栋级, 国外 城市级)
-    Red  : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
-    Dashi: IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
+    Bt       : IPv4 (国内 区县级, 国外 国家级)
+    Zx       : IPv4 (国内 城市级, 国外 国家级), IPv6 (国内 城市级, 国外 省份级)
+    Btv      : IPv4 (国内 城市级, 国外 省份级), IPv6 (国内 城市级, 国外 省份级)
+    Ipa      : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
+    Ips      : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 省份级, 国外 省份级)
+    Red      : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
+    Dashi    : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
+    CnSpeed  : IPv4 (国内 城市级, 国外 城市级), IPv6 (国内 城市级, 国外 城市级)
+    Lecloud  : IPv4 (国内 城市级, 国外 城市级)
+    Pconline : IPv4 (国内 城市级, 国外 国家级)
     '''
     import re
 
@@ -105,8 +106,8 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
 
     DftOpts = {
         'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
-        'Provider_V4': 'Bt',     # Bt, Zx, Btv, Ldd, Ipa, Ips, Mei, Red, Dashi
-        'Provider_V6': 'Dashi',  #     Zx, Btv, Ldd, Ipa, Ips, Mei, Red, Dashi
+        'Provider_V4': 'Bt',     # Bt, Zx, Btv, Ipa, Ips, Red, Dashi, CnSpeed, Lecloud, Pconline
+        'Provider_V6': 'Dashi',  #     Zx, Btv, Ipa, Ips, Red, Dashi, CnSpeed
         'Timeout'    : 5
     }
     Options = MergeDictionaries(DftOpts, Options)
@@ -114,18 +115,19 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
     Provider = None
     if '.' in Ip and re.match(r'^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$', Ip): Provider = Options.Provider_V4
     if ':' in Ip and re.match(r'^([\da-fA-F]{1,4}:){6}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^::([\da-fA-F]{1,4}:){0,4}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:):([\da-fA-F]{1,4}:){0,3}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){2}:([\da-fA-F]{1,4}:){0,2}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){3}:([\da-fA-F]{1,4}:){0,1}((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){4}:((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$|^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$|^:((:[\da-fA-F]{1,4}){1,6}|:)$|^[\da-fA-F]{1,4}:((:[\da-fA-F]{1,4}){1,5}|:)$|^([\da-fA-F]{1,4}:){2}((:[\da-fA-F]{1,4}){1,4}|:)$|^([\da-fA-F]{1,4}:){3}((:[\da-fA-F]{1,4}){1,3}|:)$|^([\da-fA-F]{1,4}:){4}((:[\da-fA-F]{1,4}){1,2}|:)$|^([\da-fA-F]{1,4}:){5}:([\da-fA-F]{1,4})?$|^([\da-fA-F]{1,4}:){6}:$', Ip): Provider = Options.Provider_V6
-    if Provider not in ['Bt', 'Zx', 'Btv', 'Ldd', 'Ipa', 'Ips', 'Mei', 'Red', 'Dashi']: return '未知 未知'
+    if Provider not in ['Bt', 'Zx', 'Btv', 'Ipa', 'Ips', 'Red', 'Dashi', 'CnSpeed', 'Lecloud', 'Pconline']: return '未知 未知'
 
-    Location = [''] * 6     # 国家, 省份, 城市, 区县, 地址, 网络
-    if  Provider == 'Bt'    : Location = __QueryIpLocation_Bt   (Ip, Options)
-    if  Provider == 'Zx'    : Location = __QueryIpLocation_Zx   (Ip, Options)
-    if  Provider == 'Btv'   : Location = __QueryIpLocation_Btv  (Ip, Options)
-    if  Provider == 'Ldd'   : Location = __QueryIpLocation_Ldd  (Ip, Options)
-    if  Provider == 'Ipa'   : Location = __QueryIpLocation_Ipa  (Ip, Options)
-    if  Provider == 'Ips'   : Location = __QueryIpLocation_Ips  (Ip, Options)
-    if  Provider == 'Mei'   : Location = __QueryIpLocation_Mei  (Ip, Options)
-    if  Provider == 'Red'   : Location = __QueryIpLocation_Red  (Ip, Options)
-    if  Provider == 'Dashi' : Location = __QueryIpLocation_Dashi(Ip, Options)
+    Location = [''] * 6 # 国家, 省份, 城市, 区县, 地址, 网络
+    if  Provider == 'Bt'       : Location = __QueryIpLocation_Bt      (Ip, Options)
+    if  Provider == 'Zx'       : Location = __QueryIpLocation_Zx      (Ip, Options)
+    if  Provider == 'Btv'      : Location = __QueryIpLocation_Btv     (Ip, Options)
+    if  Provider == 'Ipa'      : Location = __QueryIpLocation_Ipa     (Ip, Options)
+    if  Provider == 'Ips'      : Location = __QueryIpLocation_Ips     (Ip, Options)
+    if  Provider == 'Red'      : Location = __QueryIpLocation_Red     (Ip, Options)
+    if  Provider == 'Dashi'    : Location = __QueryIpLocation_Dashi   (Ip, Options)
+    if  Provider == 'CnSpeed'  : Location = __QueryIpLocation_CnSpeed (Ip, Options)
+    if  Provider == 'Lecloud'  : Location = __QueryIpLocation_Lecloud (Ip, Options)
+    if  Provider == 'Pconline' : Location = __QueryIpLocation_Pconline(Ip, Options)
     if  Location == [''] * 6: return '未知 未知'
 
     Location = [str('' if _ is None else _) for _ in Location]
@@ -198,6 +200,9 @@ def __QueryIpLocation_Zx(Ip: str, Options: dict) -> list:
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
 
+        if Rsp.get('ip', {}).get('query') != Ip:
+            raise ValueError('Response IP Mismatch')
+
         return (re.sub(r'\s+', ' ', Rsp['country'].replace('–', ' ').replace('\t', ' ')).split(' ') + [''] * 5)[:5] + [Rsp['local']]
     except Exception as Error:
         return [''] * 6
@@ -208,6 +213,7 @@ def __QueryIpLocation_Btv(Ip: str, Options: dict) -> list:
     import requests
 
     try:
+      # Url = base64.b64decode('LWh0dHBzOi8vYXBpLmxpdmUuYmlsaWJpbGkuY29tL2NsaWVudC92MS9JcC9nZXRJbmZvTmV3P2lwPQ=='.encode()).decode()[1:] + Ip
         Url = base64.b64decode('LWh0dHBzOi8vYXBpLmxpdmUuYmlsaWJpbGkuY29tL2lwX3NlcnZpY2UvdjEvaXBfc2VydmljZS9nZXRfaXBfYWRkcj9pcD0='.encode()).decode()[1:] + Ip
         Hed = {
             'Accept'         : '*/*',
@@ -227,39 +233,10 @@ def __QueryIpLocation_Btv(Ip: str, Options: dict) -> list:
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
 
+        if Rsp.get('addr') != Ip:
+            raise ValueError('Response IP Mismatch')
+
         return [Rsp['country'], Rsp['province'], Rsp['city'], '', '', Rsp['isp'].upper()]
-    except Exception as Error:
-        return [''] * 6
-
-
-def __QueryIpLocation_Ldd(Ip: str, Options: dict) -> list:
-    import base64
-    import requests
-
-    try:
-        Url = base64.b64decode('LWh0dHBzOi8vb3BlbmFwaS5sZGRnby5uZXQvYmFzZS9nc2VydmljZS9hcGkvdjEvR2V0SXBBZGRyZXNz'.encode()).decode()[1:]
-        Hed = {
-            'Accept'         : '*/*',
-            'Accept-Language': 'zh-CN,zh;q=0.9',
-            'Cache-Control'  : 'no-cache',
-            'Content-Type'   : 'application/json;charset=UTF-8',
-            'DNT'            : '1',
-            'Origin'         : base64.b64decode('LWh0dHBzOi8vd3d3LmxkZGdvLm5ldA=='.encode()).decode()[1:],
-            'Pragma'         : 'no-cache',
-            'Priority'       : 'u=1, i',
-            'Referer'        : base64.b64decode('LWh0dHBzOi8vd3d3LmxkZGdvLm5ldC8='.encode()).decode()[1:],
-            'Sec-Fetch-Dest' : 'empty',
-            'Sec-Fetch-Mode' : 'cors',
-            'Sec-Fetch-Site' : 'same-site',
-            'User-Agent'     : Options['User-Agent'],
-            'X-Forwarded-For': Ip
-        }
-        Dat = {
-            'ip': Ip
-        }
-        Rsp = requests.post(Url, headers = Hed, json = Dat, timeout = Options.Timeout).json()['data']
-
-        return [Rsp['nation'], Rsp['province'], Rsp['city'], Rsp['area'], Rsp['address'], Rsp['type']]
     except Exception as Error:
         return [''] * 6
 
@@ -269,7 +246,7 @@ def __QueryIpLocation_Ipa(Ip: str, Options: dict) -> list:
     import requests
 
     try:
-        Url = base64.b64decode('LWh0dHBzOi8vZGVtby5pcC1hcGkuY29tL2pzb24v'.encode()).decode()[1:] + Ip + base64.b64decode('LT9maWVsZHM9Y291bnRyeSxyZWdpb25OYW1lLGNpdHksaXNwLGFzLG9yZyZsYW5nPXpoLUNO'.encode()).decode()[1:]
+        Url = base64.b64decode('LWh0dHA6Ly9kZW1vLmlwLWFwaS5jb20vanNvbi8='.encode()).decode()[1:] + Ip + base64.b64decode('LT9maWVsZHM9Y291bnRyeSxyZWdpb25OYW1lLGNpdHksaXNwLGFzLG9yZyxxdWVyeSZsYW5nPXpoLUNO'.encode()).decode()[1:]
         Hed = {
             'Accept'         : '*/*',
             'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -286,6 +263,9 @@ def __QueryIpLocation_Ipa(Ip: str, Options: dict) -> list:
             'X-Forwarded-For': Ip
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()
+
+        if 'query' in Rsp and Rsp.get('query') != Ip:
+            raise ValueError('Response IP Mismatch')
 
         return [Rsp['country'], Rsp['regionName'], Rsp['city'], '', '', Rsp['isp'] + Rsp['as'] + Rsp['org'] if Rsp['country'] == '中国' else Rsp['isp']]
     except Exception as Error:
@@ -316,6 +296,9 @@ def __QueryIpLocation_Ips(Ip: str, Options: dict) -> list:
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout, allow_redirects = False).text
 
+        if Ip not in Rsp:
+            raise ValueError('Response IP Mismatch')
+
         __1 = re.search(r'<td class="th">归属地</td>[\s\S]*?<span>(.*?)</span>', Rsp); __1 = re.sub(r'<a.*?>(.*?)</a>|\s+', lambda m: m.group(1) if m.group(1) else ' ', __1.group(1)) if __1 else ''
         __2 = re.search(r'<td class="th">运营商</td>[\s\S]*?<span>(.*?)</span>', Rsp)
 
@@ -324,48 +307,12 @@ def __QueryIpLocation_Ips(Ip: str, Options: dict) -> list:
         return [''] * 6
 
 
-def __QueryIpLocation_Mei(Ip: str, Options: dict) -> list:
-    import base64
-    import requests
-
-    try:
-        Url = base64.b64decode('LWh0dHBzOi8vYXBpbW9iaWxlLm1laXR1YW4uY29tL2xvY2F0ZS92Mi9pcC9sb2M/cmdlbz10cnVlJmlwPQ=='.encode()).decode()[1:] + Ip
-        Hed = {
-            'Accept'         : '*/*',
-            'Accept-Language': 'zh-CN,zh;q=0.9',
-            'Cache-Control'  : 'no-cache',
-            'Content-Type'   : 'application/json;charset=UTF-8',
-            'DNT'            : '1',
-            'Origin'         : base64.b64decode('LWh0dHBzOi8vd2FpbWFpLm1laXR1YW4uY29t'.encode()).decode()[1:],
-            'Pragma'         : 'no-cache',
-            'Priority'       : 'u=1, i',
-            'Referer'        : base64.b64decode('LWh0dHBzOi8vd2FpbWFpLm1laXR1YW4uY29tLw=='.encode()).decode()[1:],
-            'Sec-Fetch-Dest' : 'empty',
-            'Sec-Fetch-Mode' : 'cors',
-            'Sec-Fetch-Site' : 'same-site',
-            'User-Agent'     : Options['User-Agent'],
-            'X-Forwarded-For': Ip
-        }
-        Rsp_Locate = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
-    except Exception as Error:
-        return [''] * 6
-
-    try:
-        Url = base64.b64decode('LWh0dHBzOi8vYXBpbW9iaWxlLm1laXR1YW4uY29tL2dyb3VwL3YxL2NpdHkvbGF0bG5nLw=='.encode()).decode()[1:] + '%s,%s' % (Rsp_Locate['lat'], Rsp_Locate['lng']) + base64.b64decode('LT90YWc9MA=='.encode()).decode()[1:]
-        Rsp_Latlng = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['data']
-
-        try: return [Rsp_Latlng['country'], Rsp_Latlng['province'], Rsp_Latlng['city'], Rsp_Latlng['district'], ('%s (%s)' % (Rsp_Latlng['areaName'].strip(), Rsp_Latlng['detail'].strip())).removesuffix(' ()'), '']
-        except (KeyError, TypeError, AttributeError):
-             return [Rsp_Locate['rgeo']['country'], Rsp_Locate['rgeo']['province'], Rsp_Locate['rgeo']['city'], Rsp_Locate['rgeo'].get('district', ''), '', '']
-    except Exception as Error:
-        return [''] * 6
-    
-
 def __QueryIpLocation_Red(Ip: str, Options: dict) -> list:
     import base64
     import requests
 
     try:
+      # Url = base64.b64decode('LWh0dHBzOi8vZ3NsYi54aWFvaG9uZ3NodS5jb20vYXBpL2h0dHBkbnMvdjEvZG9tYWlucz9kb21haW5zPXd3dy54aWFvaG9uZ3NodS5jb20='.encode()).decode()[1:]
         Url = base64.b64decode('LWh0dHBzOi8vZ3NsYi54aWFvaG9uZ3NodS5jb20vYXBpL2dzbGIvdjEvZG9tYWluTmV3P2RvbWFpbnM9d3d3LnhpYW9ob25nc2h1LmNvbQ=='.encode()).decode()[1:]
         Hed = {
             'Accept'         : '*/*',
@@ -379,6 +326,10 @@ def __QueryIpLocation_Red(Ip: str, Options: dict) -> list:
             base64.b64decode('LVhocy1SZWFsLUlw'.encode()).decode()[1:]: Ip
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['client_info']
+
+        if Rsp.get('ip') != Ip:
+            raise ValueError('Response IP Mismatch')
+
         return [Rsp['country'], Rsp['province'], Rsp['city'], '', '', Rsp['isp'] + ' ' + Rsp['owner_domain']]
     except Exception as Error:
         return [''] * 6
@@ -408,6 +359,103 @@ def __QueryIpLocation_Dashi(Ip: str, Options: dict) -> list:
         }
         Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()['result']
 
+        if Rsp.get('ip') != Ip:
+            raise ValueError('Response IP Mismatch')
+
         return [Rsp['country'].replace('UNKNOWN', ''), Rsp['province'].replace('UNKNOWN', ''), Rsp['city'].replace('UNKNOWN', ''), '', '', (Rsp['isp'] + Rsp['org']).replace('UNKNOWN', '') if Rsp['country'] == '中国' else Rsp['isp'].replace('UNKNOWN', '')]
+    except Exception as Error:
+        return [''] * 6
+
+
+def __QueryIpLocation_CnSpeed(Ip: str, Options: dict) -> list:
+    import json
+    import base64
+    import requests
+
+    try:
+        Url = base64.b64decode('LWh0dHBzOi8vZGxjdjIuY25zcGVlZHRlc3QuY246ODQ0My9kYXRhU2VydmVyL2dldElwTG9jUy5waHA='.encode()).decode()[1:]
+        Hed = {
+            'Accept'         : '*/*',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+            'Cache-Control'  : 'no-cache',
+            'Pragma'         : 'no-cache',
+            'User-Agent'     : Options['User-Agent'],
+            'X-Forwarded-For': Ip
+        }
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).text.strip().split('|')
+
+        if len(Rsp) < 2 or Rsp[0] != Ip:
+            raise ValueError('Response IP Mismatch')
+
+        Rsp = (json.loads(Rsp[1]) + [''] * 5)[:5]
+        return Rsp[:4] + ['', Rsp[4]]
+    except Exception as Error:
+        return [''] * 6
+
+
+def __QueryIpLocation_Lecloud(Ip: str, Options: dict) -> list:
+    import re
+    import base64
+    import requests
+
+    try:
+        Url = base64.b64decode('LWh0dHA6Ly9wbGF5LmczcHJveHkubGVjbG91ZC5jb20vdm9kL3YyLw=='.encode()).decode()[1:]
+        Hed = {
+            'Accept'         : '*/*',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+            'Cache-Control'  : 'no-cache',
+            'Pragma'         : 'no-cache',
+            'User-Agent'     : Options['User-Agent'],
+            'X-Forwarded-For': Ip,
+            'X-Real-IP'      : Ip,
+            'Client-IP'      : Ip
+        }
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).text
+
+        __1 = re.search(r'Your IP:([^\[]+)\[', Rsp)
+        __2 = re.search(r'Remote IP:([^\[]+)\[', Rsp)
+        if not __1 or not __2 or __1.group(1) != Ip or __2.group(1) != Ip: raise ValueError('Response IP Mismatch')
+
+        __3 = re.search(r'<h3>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/([^<]+)</h3>', Rsp)
+        if not __3: raise ValueError('Location Is Empty')
+        Rsp = [_.replace('未知运营商', '').replace('未知', '').strip() for _ in (__3.group(1).split('-') + [''] * 4)[:4]]
+
+        return [Rsp[0], Rsp[1], Rsp[2], '', '', Rsp[3]]
+    except Exception as Error:
+        return [''] * 6
+
+
+def __QueryIpLocation_Pconline(Ip: str, Options: dict) -> list:
+    import re
+    import base64
+    import requests
+    import urllib.parse
+
+    try:
+        Url = base64.b64decode('LWh0dHBzOi8vd2hvaXMucGNvbmxpbmUuY29tLmNuL2lwSnNvbi5qc3A/anNvbj10cnVlJmlwPQ=='.encode()).decode()[1:] + urllib.parse.quote(Ip, safe = '')
+        Hed = {
+            'Accept'         : '*/*',
+            'Accept-Language': 'zh-CN,zh;q=0.9',
+            'Cache-Control'  : 'no-cache',
+            'Pragma'         : 'no-cache',
+            'User-Agent'     : Options['User-Agent'],
+            'X-Forwarded-For': Ip,
+            'X-Real-IP'      : Ip
+        }
+        Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout)
+        Rsp.encoding = 'GBK'
+        Rsp = Rsp.json()
+
+        if Rsp.get('ip') != Ip:
+            raise ValueError('Response IP Mismatch')
+
+        Addr = re.sub(r'\s+', ' ', Rsp.get('addr', '')).strip()
+        if Rsp.get('pro') or Rsp.get('city') or Rsp.get('region'):
+            Isp = Addr
+            for Item in [Rsp.get('pro'), Rsp.get('city'), Rsp.get('region')]:
+                Isp = Isp.replace(Item or '', '')
+            return ['中国', Rsp.get('pro', ''), Rsp.get('city', ''), Rsp.get('region', ''), '', Isp.strip()]
+
+        return [Addr, '', '', '', '', '']
     except Exception as Error:
         return [''] * 6
