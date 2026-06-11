@@ -10,8 +10,6 @@ def SelectOption(Items, Title = 'Select An Option', Options: dict = None):
     Returns: Selected Value (str).
     '''
     import sys
-    import tty
-    import termios
 
     if not __package__:
           from  Init import MergeDictionaries
@@ -40,6 +38,21 @@ def SelectOption(Items, Title = 'Select An Option', Options: dict = None):
     MenuHeight    = len(Parsed) + bool(TitLine) + bool(SepLine) * 2
     SelectedIndex = 0
 
+    def EnableWindowsAnsi():
+        if sys.platform != 'win32': return
+
+        try:
+            import ctypes
+
+            Kernel32 = ctypes.windll.kernel32
+            Handle   = Kernel32.GetStdHandle(-11)
+            Mode     = ctypes.c_uint()
+
+            if Kernel32.GetConsoleMode(Handle, ctypes.byref(Mode)):
+                Kernel32.SetConsoleMode(Handle, Mode.value | 0x0004)
+        except Exception:
+            pass
+
     def DrawMenu():
         sys.stdout.write(TitLine)
         sys.stdout.write(SepLine)
@@ -52,34 +65,75 @@ def SelectOption(Items, Title = 'Select An Option', Options: dict = None):
         sys.stdout.write(BtmLine)
         sys.stdout.flush()
 
+    def ReadKeyWindows():
+        import msvcrt
+
+        Ch = msvcrt.getwch()
+        if Ch == '\x03': raise KeyboardInterrupt
+        if Ch in ('\x00', '\xe0'):
+            Ch2 = msvcrt.getwch()
+            if   Ch2 == 'H': return 'UP'
+            elif Ch2 == 'P': return 'DOWN'
+        elif Ch in ('\r', '\n'):
+            return 'ENTER'
+
+        return None
+
+    def ReadKeyPosix():
+        Ch = sys.stdin.read(1)
+        if Ch == '\x03': raise KeyboardInterrupt
+        if Ch == '\x1b':
+            Ch2 = sys.stdin.read(1)
+            if Ch2 == '[':
+                Ch3 = sys.stdin.read(1)
+                if   Ch3 == 'A': return 'UP'
+                elif Ch3 == 'B': return 'DOWN'
+        elif Ch in ('\r', '\n'):
+            return 'ENTER'
+
+        return None
+
+    EnableWindowsAnsi()
     DrawMenu()
 
-    Fd = sys.stdin.fileno()
-    OldSettings = termios.tcgetattr(Fd)
-
-    try:
-        tty.setraw(Fd)
+    if sys.platform == 'win32':
         while True:
-            Ch = sys.stdin.read(1)
-            if Ch == '\x1b':
-                Ch2 = sys.stdin.read(1)
-                if Ch2 == '[':
-                    Ch3 = sys.stdin.read(1)
-                    if   Ch3 == 'A': SelectedIndex = (SelectedIndex - 1) % len(Parsed)
-                    elif Ch3 == 'B': SelectedIndex = (SelectedIndex + 1) % len(Parsed)
-            elif Ch in ('\r', '\n'):
-                break
+            Key = ReadKeyWindows()
+            if   Key == 'UP'   : SelectedIndex = (SelectedIndex - 1) % len(Parsed)
+            elif Key == 'DOWN' : SelectedIndex = (SelectedIndex + 1) % len(Parsed)
+            elif Key == 'ENTER': break
+            else               : continue
 
             sys.stdout.write(f'\033[{MenuHeight}A')
             sys.stdout.write('\033[J')
             DrawMenu()
-    finally:
-        termios.tcsetattr(Fd, termios.TCSADRAIN, OldSettings)
+    else:
+        import tty
+        import termios
+
+        Fd = sys.stdin.fileno()
+        OldSettings = termios.tcgetattr(Fd)
+
+        try:
+            tty.setraw(Fd)
+            while True:
+                Key = ReadKeyPosix()
+                if   Key == 'UP'   : SelectedIndex = (SelectedIndex - 1) % len(Parsed)
+                elif Key == 'DOWN' : SelectedIndex = (SelectedIndex + 1) % len(Parsed)
+                elif Key == 'ENTER': break
+                else               : continue
+
+                sys.stdout.write(f'\033[{MenuHeight}A')
+                sys.stdout.write('\033[J')
+                DrawMenu()
+        finally:
+            termios.tcsetattr(Fd, termios.TCSADRAIN, OldSettings)
 
     if Options.PersistentDisplay:
         print('')
     else:
         sys.stdout.write(f'\033[{MenuHeight}A')
         sys.stdout.write('\033[J')
+        sys.stdout.flush()
 
     return Parsed[SelectedIndex]['Value']
