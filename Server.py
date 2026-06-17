@@ -294,7 +294,7 @@ class FcWsgi(object):
         self._T3 = int(time.time() * 1000) # T3: Time @ Sending the Response (Millisecond)
       # self._T4 = -1                      # T4: Time @ Destroy the Instance (Millisecond)
 
-        return [self._Out_Body]
+        return [self._Out_Body.encode('utf-8')]
 
     @property
     def Geo(self):
@@ -333,7 +333,7 @@ class FcWsgi(object):
             except:
                 return {}
 
-        self._Inn_Size = int(self._Environ.get('CONTENT_LENGTH', '0'))
+        self._Inn_Size = int(self._Environ.get('CONTENT_LENGTH') or 0)
 
         if self._Inn_Size <= 0:
             return {}
