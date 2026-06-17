@@ -53,7 +53,7 @@ function AsyncCall(callable $Function, ...$Args): object {
 /**
  * Merge two Dictionaries Recursively.
  */
-function MergeDictionaries(array $Base, array $Override): array {
+function MergeDictionaries(array $Base, ?array $Override = null): array {
     if (!is_array($Base)) {
         throw new TypeError("Base Must Be A Type Of Dictionary");
     }
@@ -169,17 +169,17 @@ function ReloadConfig(?string $Path = null): array {
  * Decrypt Environment Variable from a JSON File.
  */
 function ReadEnvironVar(?string $Path = null): array {
-    function __Decrypt__($Data, $Fernet) {
+    $Decrypt = function($Data, $Fernet) use (&$Decrypt) {
         if (is_string($Data)) {
-            return $Fernet->decrypt($Data);
+            return $Fernet->decrypt(base64_decode($Data));
         } elseif (is_array($Data)) {
             foreach ($Data as $Key => $Value) {
                 if ($Key === "AesKey" || $Key === "Type") continue;
-                $Data[$Key] = __Decrypt__($Value, $Fernet);
+                $Data[$Key] = $Decrypt($Value, $Fernet);
             }
         }
         return $Data;
-    }
+    };
 
     if ($Path === null) {
         $Path = dirname(__FILE__) . '/EnvironVariable.json';
@@ -204,7 +204,7 @@ function ReadEnvironVar(?string $Path = null): array {
             throw new Exception("AES_KEY Environment Variable Not Set");
         }
         $Fernet->setKey(hex2bin($AesKey));
-        return __Decrypt__(ReadConfig($AesEnvPath), $Fernet);
+        return $Decrypt(ReadConfig($AesEnvPath), $Fernet);
     }
     throw new Exception("File Does Not Exist: $Path");
 }
@@ -223,17 +223,17 @@ function EncryptEnvironVar(?string $Path = null): void {
  * Use `Force = true` to Overwrite the Existing File (if Merge is Disabled).
  */
 function SetEnvironVar(array $Env, ?string $Path = null, bool $Merge = true, bool $Force = false): void {
-    function __Encrypt__($Data, $Fernet) {
+    $Encrypt = function($Data, $Fernet) use (&$Encrypt) {
         if (is_string($Data)) {
-            return $Fernet->encrypt($Data);
+            return base64_encode($Fernet->encrypt($Data));
         } elseif (is_array($Data)) {
             foreach ($Data as $Key => $Value) {
                 if ($Key === "AesKey" || $Key === "Type") continue;
-                $Data[$Key] = __Encrypt__($Value, $Fernet);
+                $Data[$Key] = $Encrypt($Value, $Fernet);
             }
         }
         return $Data;
-    }
+    };
 
     if ($Path === null) {
         $Path = dirname(__FILE__) . '/EnvironVariable.json';
@@ -265,7 +265,7 @@ function SetEnvironVar(array $Env, ?string $Path = null, bool $Merge = true, boo
     $Fernet->setKey(hex2bin($AesKey));
 
     SetConfig($Env, $RawEnvPath, false, true);
-    SetConfig(__Encrypt__($Env, $Fernet), $AesEnvPath, false, true);
+    SetConfig($Encrypt($Env, $Fernet), $AesEnvPath, false, true);
 }
 
 /**
