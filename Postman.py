@@ -161,6 +161,10 @@ class PostmanResponse(object):
     def __iter__(self):
         return self.iter_content(128)
 
+    def iter_content(self, chunk_size = 1):
+        for Index in range(0, len(self.content), chunk_size):
+            yield self.content[Index:Index + chunk_size]
+
     def json(self, **kwargs):
         import json
         from requests.utils import guess_json_utf
