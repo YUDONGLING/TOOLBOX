@@ -684,15 +684,22 @@ def AppendObject(Key: str, Path: str = None, Data: str = None, Header: dict = No
             Position = 0
 
         if Data is None:
-            with open(Path, 'rb') as File: Data = File.read()
-
-        Response['Result'] = Bucket.append_object(
-            key               = Key.removeprefix('/'),
-            position          = Position,
-            data              = Data,
-            headers           = Header,
-            progress_callback = ProgressCallback
-        )
+            with open(Path, 'rb') as File:
+                Response['Result'] = Bucket.append_object(
+                    key               = Key.removeprefix('/'),
+                    position          = Position,
+                    data              = File,
+                    headers           = Header,
+                    progress_callback = ProgressCallback
+                )
+        else:
+            Response['Result'] = Bucket.append_object(
+                key               = Key.removeprefix('/'),
+                position          = Position,
+                data              = Data,
+                headers           = Header,
+                progress_callback = ProgressCallback
+            )
     except Exception as Error:
         Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
 
