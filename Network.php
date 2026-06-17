@@ -37,7 +37,7 @@ function QueryDns(string $Host, string $Type = 'A', ?bool $Global = null, ?array
             $FilePath = __DIR__ . '/Extra/' . ($Global ? 'Global_IPs.json' : 'CN_IPs.json');
             $IPs = json_decode(file_get_contents($FilePath), true);
 
-            function FetchIPs($Zone, $IPs) {
+            $FetchIPs = function($Zone, $IPs) {
                 $Zone = explode('.', $Zone);
                 $Temp = $IPs;
                 while ($Zone) {
@@ -49,33 +49,43 @@ function QueryDns(string $Host, string $Type = 'A', ?bool $Global = null, ?array
                     }
                 }
                 return $Temp;
-            }
+            };
+
+            $FlattenIPs = function(&$Tar, $Src) use (&$FlattenIPs) {
+                if (is_array($Src)) {
+                    foreach ($Src as $Item) {
+                        $FlattenIPs($Tar, $Item);
+                    }
+                } else {
+                    $Tar[] = $Src;
+                }
+            };
 
             $Pool = [];
+            $ExcludePool = [];
             $Region = $Region ? (is_array($Region) ? $Region : [$Region]) : [];
             foreach ($Region as $Rule) {
                 if (strpos($Rule, '-') === 0) {
-                    FetchIPs(substr($Rule, 1), $IPs);
+                    $ExcludePool[] = $FetchIPs(substr($Rule, 1), $IPs);
                 } else {
-                    $Pool[] = FetchIPs($Rule, $IPs);
+                    $Pool[] = $FetchIPs($Rule, $IPs);
                 }
             }
             if (empty($Pool)) {
                 $Pool = $IPs;
             }
 
-            function FlattenIPs(&$Tar, $Src) {
-                if (is_array($Src)) {
-                    foreach ($Src as $Item) {
-                        FlattenIPs($Tar, $Item);
-                    }
-                } else {
-                    $Tar[] = $Src;
-                }
-            }
-
             $IP = [];
-            FlattenIPs($IP, $Pool);
+            $FlattenIPs($IP, $Pool);
+
+            if (!empty($ExcludePool)) {
+                $Excluded = [];
+                $FlattenIPs($Excluded, $ExcludePool);
+                $Excluded = array_flip($Excluded);
+                $IP = array_values(array_filter($IP, function($Item) use ($Excluded) {
+                    return !isset($Excluded[$Item]);
+                }));
+            }
 
             if (empty($IP)) {
                 return '';
