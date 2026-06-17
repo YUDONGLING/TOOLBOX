@@ -66,7 +66,7 @@ function ConvertSize(int | float $Size, string $Unit = "B", ?array $Options = nu
         if (!in_array($Unit, $Units)) {
             throw new ValueError("Unit Must be in B, KB, MB, GB, TB or PB");
         }
-    } catch (Exception $Error) {
+    } catch (Throwable $Error) {
         $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error); return $Response;
     }
 
@@ -85,7 +85,7 @@ function ConvertSize(int | float $Size, string $Unit = "B", ?array $Options = nu
                 break;
             }
         }
-    } catch (Exception $Error) {
+    } catch (Throwable $Error) {
         $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error); return $Response;
     }
 
@@ -99,7 +99,7 @@ function ConvertSize(int | float $Size, string $Unit = "B", ?array $Options = nu
         }
 
         $Response["Result"] = $Result;
-    } catch (Exception $Error) {
+    } catch (Throwable $Error) {
         $Response["Ec"] = 50003; $Response["Em"] = MakeErrorMessage($Error); return $Response;
     }
 
