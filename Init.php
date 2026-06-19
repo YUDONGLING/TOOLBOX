@@ -227,9 +227,18 @@ function SetEnvironVar(array $Env, ?string $Path = null, bool $Merge = true, boo
         if (is_string($Data)) {
             return base64_encode($Fernet->encrypt($Data));
         } elseif (is_array($Data)) {
-            foreach ($Data as $Key => $Value) {
-                if ($Key === "AesKey" || $Key === "Type") continue;
-                $Data[$Key] = $Encrypt($Value, $Fernet);
+            $Keys = array_keys($Data);
+            $IsList = ($Keys === array_keys($Keys));
+
+            if ($IsList) {
+                foreach ($Data as $Key => $Value) {
+                    $Data[$Key] = $Encrypt($Value, $Fernet);
+                }
+            } else {
+                foreach ($Data as $Key => $Value) {
+                    if ($Key === "Type") continue;
+                    $Data[$Key] = ($Key === "AesKey") ? "AES_KEY" : $Encrypt($Value, $Fernet);
+                }
             }
         }
         return $Data;

@@ -251,8 +251,8 @@ def SetEnvironVar(Env: dict, Path: str = None, **Kwargs) -> None:
             Data = [__Encrypt__(_, Fernet) for _ in Data]
         elif isinstance(Data, dict):
             for Key, Value in Data.items():
-                if Key in ['AesKey', 'Type']: continue
-                Data[Key] = __Encrypt__(Value, Fernet)
+                if Key in ['Type']: continue
+                Data[Key] = {'AesKey': 'AES_KEY'}.get(Key) or __Encrypt__(Value, Fernet)
         return Data
 
     if Path == None:
