@@ -118,17 +118,17 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
     if Provider not in ['Bt', 'Zx', 'Btv', 'Ipa', 'Ips', 'Red', 'Dashi', 'CnSpeed', 'Lecloud', 'Pconline']: return '未知 未知'
 
     Location = [''] * 6 # 国家, 省份, 城市, 区县, 地址, 网络
-    if  Provider == 'Bt'       : Location = __QueryIpLocation_Bt      (Ip, Options)
-    if  Provider == 'Zx'       : Location = __QueryIpLocation_Zx      (Ip, Options)
-    if  Provider == 'Btv'      : Location = __QueryIpLocation_Btv     (Ip, Options)
-    if  Provider == 'Ipa'      : Location = __QueryIpLocation_Ipa     (Ip, Options)
-    if  Provider == 'Ips'      : Location = __QueryIpLocation_Ips     (Ip, Options)
-    if  Provider == 'Red'      : Location = __QueryIpLocation_Red     (Ip, Options)
-    if  Provider == 'Dashi'    : Location = __QueryIpLocation_Dashi   (Ip, Options)
-    if  Provider == 'CnSpeed'  : Location = __QueryIpLocation_CnSpeed (Ip, Options)
-    if  Provider == 'Lecloud'  : Location = __QueryIpLocation_Lecloud (Ip, Options)
-    if  Provider == 'Pconline' : Location = __QueryIpLocation_Pconline(Ip, Options)
-    if  Location == [''] * 6: return '未知 未知'
+    if Provider == 'Bt'       : Location = __QueryIpLocation_Bt      (Ip, Options)
+    if Provider == 'Zx'       : Location = __QueryIpLocation_Zx      (Ip, Options)
+    if Provider == 'Btv'      : Location = __QueryIpLocation_Btv     (Ip, Options)
+    if Provider == 'Ipa'      : Location = __QueryIpLocation_Ipa     (Ip, Options)
+    if Provider == 'Ips'      : Location = __QueryIpLocation_Ips     (Ip, Options)
+    if Provider == 'Red'      : Location = __QueryIpLocation_Red     (Ip, Options)
+    if Provider == 'Dashi'    : Location = __QueryIpLocation_Dashi   (Ip, Options)
+    if Provider == 'CnSpeed'  : Location = __QueryIpLocation_CnSpeed (Ip, Options)
+    if Provider == 'Lecloud'  : Location = __QueryIpLocation_Lecloud (Ip, Options)
+    if Provider == 'Pconline' : Location = __QueryIpLocation_Pconline(Ip, Options)
+    if Location == [''] * 6: return '未知 未知'
 
     Location = [str('' if _ is None else _) for _ in Location]
     if  Location[0] == '中国':
@@ -143,14 +143,51 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
         Location[3] = re.sub(r'(管理区管委会|行政委员会|风景名胜区|林区|市|县|区)$', '', Location[3]) if len(Location[3]) > 2 and not re.search(r'(管理区|回族区|聚集区|开发区|示范区|食品区|实验区|自治县|矿区|新区|园区|族区)$', Location[3]) else Location[3]
 
         # 网络 Network Provider
-        if any([_ in Location[5].upper() for _ in ['广电', 'CABLE'  , 'BROADCAST'       ]]): Location[5] = '广电'
-        if any([_ in Location[5].upper() for _ in ['电信', 'TELECOM', 'CHINANET'        ]]): Location[5] = '电信'
-        if any([_ in Location[5].upper() for _ in ['联通', 'UNICOM' , 'CHINA169'        ]]): Location[5] = '联通'
-        if any([_ in Location[5].upper() for _ in ['移动', 'MOBILE' , 'CMNET'           ]]): Location[5] = '移动'
-        if any([_ in Location[5].upper() for _ in ['铁通', 'TIETONG', 'RAILWAY'         ]]): Location[5] = '铁通'
-        if any([_ in Location[5].upper() for _ in ['教育', 'CERNET' , 'EDUCATION'       ]]): Location[5] = '教育网'
-        if any([_ in Location[5].upper() for _ in ['阿里', 'ALIBABA', 'ALIYUN', 'TAOBAO']]): Location[5] = '阿里云'
-        if any([_ in Location[5].upper() for _ in ['腾讯', 'TENCENT', 'QQ'    , 'WECHAT']]): Location[5] = '腾讯云'
+        Network = Location[5].upper()
+        for Name, Pattern in {
+            'UCloud': r'优刻得|UCLOUD|U-CLOUD',
+            '安畅网络': r'安畅|ANCHNET',
+            '长城宽带': r'长城宽带|GWBN|GREAT\s*WALL\s*BROADBAND',
+            '帝联科技': r'帝联|DNION',
+            '光环新网': r'光环新网|SINNET',
+            '华云数据': r'华云|HUAYUN',
+            '世纪互联': r'世纪互联|21VIANET|VNET',
+            '首都在线': r'首都在线|CAPITAL\s*ONLINE',
+            '网宿科技': r'网宿|WANGSU|CHINA\s*NETCENTER|QUANTIL|WSCDN',
+            '西部数码': r'西部数码|WEST\.?CN',
+            '知道创宇': r'知道创宇|KNOWNSEC|加速乐|JIASULE',
+            '阿里云': r'阿里|ALIBABA|ALIYUN|ALICLOUD|TAOBAO',
+            '百度云': r'百度|BAIDU',
+            '白山云': r'白山|BAISHAN',
+            '多吉云': r'多吉|DOGE\s*CLOUD',
+            '华为云': r'华为|HUAWEI',
+            '教育网': r'教育|CERNET|EDUCATION',
+            '金山云': r'金山|KINGSOFT|KSYUN',
+            '京东云': r'京东|JINGDONG|JD\.COM|JD\s*CLOUD',
+            '联通云': r'联通云|WO\s*CLOUD|UNICOM\s*CLOUD',
+            '美团云': r'美团|MEITUAN',
+            '鹏博士': r'鹏博士|DR\s*PENG',
+            '奇虎云': r'奇虎|QIHOO|360云|360\s*CLOUD',
+            '七牛云': r'七牛|QINIU',
+            '腾讯云': r'腾讯|TENCENT|QCLOUD|\bQQ\b|WECHAT',
+            '天翼云': r'天翼云|CTYUN|CHINA\s*TELECOM\s*CLOUD',
+            '网易云': r'网易|NETEASE',
+            '小米云': r'小米|XIAOMI|MI\s*CLOUD',
+            '新浪云': r'新浪|SINA|SAE',
+            '移动云': r'移动云|CHINA\s*MOBILE\s*CLOUD|CMCC\s*CLOUD',
+            '又拍云': r'又拍|UPYUN',
+            '字节云': r'火山|VOLC|VULCAN|BYTE\s*DANCE|TOUTIAO|DOUYIN',
+            '电信': r'电信|CHINA\s*TELECOM|CHINANET|CTGNET|CN2|163NET',
+            '广电': r'广电|中国广播电视|CBN|CABLE|BROADCAST',
+            '蓝汛': r'蓝汛|CHINACACHE',
+            '联通': r'联通|网通|UNICOM|CHINA169|CNCGROUP|NETCOM',
+            '青云': r'青云|优帆科技|QINGCLOUD|YUNIFY',
+            '铁通': r'铁通|TIETONG|RAILWAY|RAILCOM',
+            '移动': r'移动|MOBILE|CMNET|CMCC|CMI',
+        }.items():
+            if re.search(Pattern, Network):
+                Location[5] = Name; break
+
     else:
         # 区县和城市重复时, 区县置空
         if Location[3] == Location[2]: Location[3] = ''
@@ -159,7 +196,52 @@ def QueryIpLocation(Ip: str, Options: dict = None) -> str:
         # 省份和国家重复时, 省份置空
         if Location[1] == Location[0]: Location[1] = ''
 
-    return re.sub(r'\s+', ' ', ' '.join(Location).replace('CZ88.NET', '')).strip()
+    return _CleanLocName(' '.join(Location))
+
+
+def _CleanLocName(Text: str) -> str:
+    import re
+    return re.sub(r'\s+', ' ', str('' if Text is None else Text).replace('UNKNOWN', '').replace('CZ88.NET', '')).strip()
+
+
+def _MergeLocNames(*Texts: str) -> str:
+    import re
+
+    Names = []
+    Norms = []
+    for Text in Texts:
+        Text = _CleanLocName(Text)
+        if not Text: continue
+
+        Norm = re.sub(r'\s+', '', Text).upper()
+        Add = True
+        Replace = None
+        Remove = []
+        for Idx, _ in enumerate(Norms):
+            if Norm == _ or Norm in _:
+                Add = False
+                break
+            if _ in Norm:
+                if Replace is None:
+                    Replace = Idx
+                else:
+                    Remove.append(Idx)
+        if not Add: continue
+        if Replace is not None:
+            Names[Replace] = Text
+            Norms[Replace] = Norm
+            for Idx in reversed(Remove):
+                del Names[Idx]
+                del Norms[Idx]
+            continue
+        for Idx in reversed(Remove):
+            del Names[Idx]
+            del Norms[Idx]
+
+        Names.append(Text)
+        Norms.append(Norm)
+
+    return ' '.join(Names)
 
 
 def __QueryIpLocation_Bt(Ip: str, Options: dict) -> list:
@@ -267,7 +349,7 @@ def __QueryIpLocation_Ipa(Ip: str, Options: dict) -> list:
         if 'query' in Rsp and Rsp.get('query') != Ip:
             raise ValueError('Response IP Mismatch')
 
-        return [Rsp['country'], Rsp['regionName'], Rsp['city'], '', '', Rsp['isp'] + Rsp['as'] + Rsp['org'] if Rsp['country'] == '中国' else Rsp['isp']]
+        return [Rsp['country'], Rsp['regionName'], Rsp['city'], '', '', _MergeLocNames(Rsp['isp'], Rsp['as'], Rsp['org']) if Rsp['country'] == '中国' else Rsp['isp']]
     except Exception as Error:
         return [''] * 6
 
@@ -330,7 +412,7 @@ def __QueryIpLocation_Red(Ip: str, Options: dict) -> list:
         if Rsp.get('ip') != Ip:
             raise ValueError('Response IP Mismatch')
 
-        return [Rsp['country'], Rsp['province'], Rsp['city'], '', '', Rsp['isp'] + ' ' + Rsp['owner_domain']]
+        return [Rsp['country'], Rsp['province'], Rsp['city'], '', '', _MergeLocNames(Rsp['isp'], Rsp['owner_domain'])]
     except Exception as Error:
         return [''] * 6
 
@@ -362,7 +444,7 @@ def __QueryIpLocation_Dashi(Ip: str, Options: dict) -> list:
         if Rsp.get('ip') != Ip:
             raise ValueError('Response IP Mismatch')
 
-        return [Rsp['country'].replace('UNKNOWN', ''), Rsp['province'].replace('UNKNOWN', ''), Rsp['city'].replace('UNKNOWN', ''), '', '', (Rsp['isp'] + Rsp['org']).replace('UNKNOWN', '') if Rsp['country'] == '中国' else Rsp['isp'].replace('UNKNOWN', '')]
+        return [Rsp['country'].replace('UNKNOWN', ''), Rsp['province'].replace('UNKNOWN', ''), Rsp['city'].replace('UNKNOWN', ''), '', '', _MergeLocNames(Rsp['isp'], Rsp['org']) if Rsp['country'] == '中国' else Rsp['isp'].replace('UNKNOWN', '')]
     except Exception as Error:
         return [''] * 6
 
