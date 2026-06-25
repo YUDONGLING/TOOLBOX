@@ -672,7 +672,7 @@ def __CommitImageUpload_AWS(Options: dict) -> dict:
     return Response
 
 
-def ApplyUploadInner(SpaceName: str, SignWith: str, Type: str = 'media' | 'image' | 'object', Count: int = 1, Options: dict = None) -> dict:
+def ApplyUploadInner(SpaceName: str, SignWith: str, Type: str = 'media' or 'image' or 'object', Count: int = 1, Options: dict = None) -> dict:
     import os
     import sys
     import json
