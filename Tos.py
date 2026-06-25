@@ -309,3 +309,365 @@ def DeleteObject(Key: str | list, Header: dict = None, Param: dict = None, Optio
     Delete Object from TOS Bucket.
     '''
     raise NotImplementedError()
+
+
+def ApplyImageUpload(Service: str, SignWith: str, Count: int = 1, Options: dict = None) -> dict:
+    import os
+    import sys
+    import json
+
+    from volcengine.imagex.v2.imagex_trait import service_info_map
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+
+    DftOpts = {
+        'Region'  : '',
+        'Endpoint': None,
+        'AK'      : '',
+        'SK'      : '',
+        'STSToken': None,
+
+        'Header'  : {
+            'Accept'    : '*/*',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
+        },
+        'Params'  : {},
+        'Cookie'  : {},
+        'Timeout' : None,
+        'Verify'  : True,
+        'AllowRedirects': True
+    }
+    Options = MergeDictionaries(DftOpts, Options)
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        if SignWith not in ('SDK', 'AWS'):
+            raise ValueError('Unsupported SignWith Option: %s' % (SignWith))
+
+        if not 1 <= Count <= 10:
+            raise ValueError('Invalid Count Value: %s, Expected Range: [1, 10]' % (Count))
+
+        if not Service       : raise ValueError('Missing Required Parameter: Service')
+        if not Options.AK    : raise ValueError('Missing Required Parameter: AK')
+        if not Options.SK    : raise ValueError('Missing Required Parameter: SK')
+        if not Options.Region: raise ValueError('Missing Required Parameter: Region')
+
+        if Options.Region not in service_info_map:
+            raise ValueError('Unsupported Region: %s' % (Options.Region))
+
+        Options.Endpoint = str(Options.Endpoint or '').strip().split('//', 1)[-1].split('/', 1)[0] or \
+            service_info_map[Options.Region].host.replace(
+                'imagex.volcengineapi.com',
+                'imagex.volcengineapi.com' if SignWith == 'SDK' else 'imagex.bytedanceapi.com')
+        Options.Params   = MergeDictionaries(Options.Params or {}, {'ServiceId': Service, 'UploadNum': Count})
+    except Exception as Error:
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    try:
+        match SignWith:
+            case 'SDK': Result = __ApplyImageUpload_SDK(Options)
+            case 'AWS': Result = __ApplyImageUpload_AWS(Options)
+
+        if Result.Ec:
+            raise Exception(Result.Em)
+
+        Body = Result.get('Result')
+        if not isinstance(Body, dict):
+            raise ValueError('Invalid ApplyImageUpload Response: %s' % (Body))
+
+        Metadata = Body.get('ResponseMetadata', {})
+        if Metadata.get('Error'):
+            Error = Metadata['Error']
+            raise ValueError('API Error %s: %s' % (Error.get('Code') or Error.get('CodeN', 'NA'), Error.get('Message') or json.dumps(Error, ensure_ascii = False)))
+
+        UploadAddress = Body.get('Result', {}).get('UploadAddress', {})
+        if not UploadAddress.get('StoreInfos') or not UploadAddress.get('UploadHosts'):
+            raise ValueError('Invalid ApplyImageUpload Result, Missing UploadAddress')
+    except Exception as Error:
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Result
+
+
+def __ApplyImageUpload_SDK(Options: dict) -> dict:
+    import os
+    import sys
+
+    from volcengine.imagex.v2.imagex_service import ImagexService
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict; from Pkg.Log import MakeErrorMessage
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        Client = ImagexService(region = Options.Region)
+        Client.set_ak(Options.AK)
+        Client.set_sk(Options.SK)
+        Client.set_session_token(Options.STSToken or '')
+        Client.set_host(Options.Endpoint)
+
+        if Options.Timeout is not None:
+            Client.set_socket_timeout(Options.Timeout)
+            Client.set_connection_timeout(Options.Timeout)
+    except Exception as Error:
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    try:
+        Response['Result'] = Client.apply_upload(Options.Params)
+    except Exception as Error:
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Response
+
+
+def __ApplyImageUpload_AWS(Options: dict) -> dict:
+    import os
+    import sys
+    import requests
+    import urllib.parse
+
+    from botocore.auth import SigV4Auth
+    from botocore.awsrequest import AWSRequest
+    from botocore.credentials import Credentials
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        Params = MergeDictionaries(dict(Options.Params or {}), {
+            'Action'   : 'ApplyImageUpload',
+            'Version'  : '2018-08-01'
+        })
+
+        QueryItems = []
+        for Key in sorted(Params):
+            Value = Params[Key]
+            if isinstance(Value, (list, tuple)):
+                QueryItems.extend((Key, _Value) for _Value in Value)
+            else:
+                QueryItems.append((Key, Value))
+
+        Url    = 'https://%s/?%s' % (Options.Endpoint, urllib.parse.urlencode(QueryItems, doseq = True, quote_via = urllib.parse.quote, safe = '-_.~'))
+        Header = requests.structures.CaseInsensitiveDict()
+        for Key, Value in dict(Options.Header or {}).items():
+            LowerKey = Key.lower()
+            if LowerKey == 'host' or LowerKey == 'authorization' or LowerKey.startswith('x-amz-'):
+                continue
+            Header[Key] = Value
+        Header['Host'] = Options.Endpoint
+
+        Request = AWSRequest(method = 'GET', url = Url, data = b'', headers = {'Host': Options.Endpoint})
+        SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'imagex', Options.Region).add_auth(Request)
+
+        for Key, Value in Request.headers.items():
+            if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
+                Header[Key] = Value
+
+        Result = requests.get(Url, headers = Header, cookies = Options.Cookie, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
+        if not Result.ok:
+            raise requests.HTTPError('<Error %s> %s' % (Result.status_code, Result.text))
+
+        Response['Result'] = Result.json()
+    except Exception as Error:
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Response
+
+
+def CommitImageUpload(Service: str, SessionKey: str, SignWith: str, Options: dict = None) -> dict:
+    import os
+    import sys
+    import json
+
+    from volcengine.imagex.v2.imagex_trait import service_info_map
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+
+    DftOpts = {
+        'Region'  : '',
+        'Endpoint': None,
+        'AK'      : '',
+        'SK'      : '',
+        'STSToken': None,
+
+        'Header'  : {
+            'Accept'      : '*/*',
+            'Content-Type': 'application/json',
+            'User-Agent'  : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
+        },
+        'Params'  : {},
+        'Body'    : '',
+        'Cookie'  : {},
+        'Timeout' : None,
+        'Verify'  : True,
+        'AllowRedirects': True
+    }
+    Options = MergeDictionaries(DftOpts, Options)
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        if SignWith not in ('SDK', 'AWS'):
+            raise ValueError('Unsupported SignWith Option: %s' % (SignWith))
+
+        if not Service       : raise ValueError('Missing Required Parameter: Service')
+        if not SessionKey    : raise ValueError('Missing Required Parameter: SessionKey')
+        if not Options.AK    : raise ValueError('Missing Required Parameter: AK')
+        if not Options.SK    : raise ValueError('Missing Required Parameter: SK')
+        if not Options.Region: raise ValueError('Missing Required Parameter: Region')
+
+        if Options.Region not in service_info_map:
+            raise ValueError('Unsupported Region: %s' % (Options.Region))
+
+        Options.Endpoint = str(Options.Endpoint or '').strip().split('//', 1)[-1].split('/', 1)[0] or \
+            service_info_map[Options.Region].host.replace(
+                'imagex.volcengineapi.com',
+                'imagex.volcengineapi.com' if SignWith == 'SDK' else 'imagex.bytedanceapi.com')
+        Options.Params   = MergeDictionaries(Options.Params or {}, {
+            'ServiceId' : Service,
+            'SessionKey': SessionKey
+        })
+
+        if Options.Body is None:
+            Options.Body = ''
+        elif isinstance(Options.Body, (dict, list)):
+            Options.Body = json.dumps(Options.Body, ensure_ascii = False)
+    except Exception as Error:
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    try:
+        match SignWith:
+            case 'SDK': Result = __CommitImageUpload_SDK(Options)
+            case 'AWS': Result = __CommitImageUpload_AWS(Options)
+
+        if Result.Ec:
+            raise Exception(Result.Em)
+
+        Body = Result.get('Result')
+        if not isinstance(Body, dict):
+            raise ValueError('Invalid CommitImageUpload Response: %s' % (Body))
+
+        Metadata = Body.get('ResponseMetadata', {})
+        if Metadata.get('Error'):
+            Error = Metadata['Error']
+            raise ValueError('API Error %s: %s' % (Error.get('Code') or Error.get('CodeN', 'NA'), Error.get('Message') or json.dumps(Error, ensure_ascii = False)))
+
+        CommitResults = Body.get('Result', {}).get('Results', [])
+        if not CommitResults:
+            raise ValueError('Invalid CommitImageUpload Result, Missing Results')
+
+        FailedResults = [_Result for _Result in CommitResults if _Result.get('UriStatus') != 2000]
+        if FailedResults:
+            raise ValueError('Invalid CommitImageUpload Result: %s' % (json.dumps(FailedResults, ensure_ascii = False)))
+    except Exception as Error:
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Result
+
+
+def __CommitImageUpload_SDK(Options: dict) -> dict:
+    import os
+    import sys
+
+    from volcengine.imagex.v2.imagex_service import ImagexService
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict; from Pkg.Log import MakeErrorMessage
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        Client = ImagexService(region = Options.Region)
+        Client.set_ak(Options.AK)
+        Client.set_sk(Options.SK)
+        Client.set_session_token(Options.STSToken or '')
+        Client.set_host(Options.Endpoint)
+
+        if Options.Timeout is not None:
+            Client.set_socket_timeout(Options.Timeout)
+            Client.set_connection_timeout(Options.Timeout)
+    except Exception as Error:
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    try:
+        Response['Result'] = Client.commit_upload(Options.Params, Options.Body)
+    except Exception as Error:
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Response
+
+
+def __CommitImageUpload_AWS(Options: dict) -> dict:
+    import os
+    import sys
+    import requests
+    import urllib.parse
+
+    from botocore.auth import SigV4Auth
+    from botocore.awsrequest import AWSRequest
+    from botocore.credentials import Credentials
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        Params = MergeDictionaries(dict(Options.Params or {}), {
+            'Action' : 'CommitImageUpload',
+            'Version': '2018-08-01'
+        })
+
+        QueryItems = []
+        for Key in sorted(Params):
+            Value = Params[Key]
+            if isinstance(Value, (list, tuple)):
+                QueryItems.extend((Key, _Value) for _Value in Value)
+            else:
+                QueryItems.append((Key, Value))
+
+        Url    = 'https://%s/?%s' % (Options.Endpoint, urllib.parse.urlencode(QueryItems, doseq = True, quote_via = urllib.parse.quote, safe = '-_.~'))
+        Header = requests.structures.CaseInsensitiveDict()
+        for Key, Value in dict(Options.Header or {}).items():
+            LowerKey = Key.lower()
+            if LowerKey == 'host' or LowerKey == 'authorization' or LowerKey.startswith('x-amz-'):
+                continue
+            Header[Key] = Value
+        Header['Host'] = Options.Endpoint
+        Header.setdefault('Content-Type', 'application/json')
+
+        Request = AWSRequest(method = 'POST', url = Url, data = Options.Body or b'', headers = {'Host': Options.Endpoint})
+        SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'imagex', Options.Region).add_auth(Request)
+
+        for Key, Value in Request.headers.items():
+            if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
+                Header[Key] = Value
+
+        Result = requests.post(Url, headers = Header, cookies = Options.Cookie, data = Options.Body, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
+        if not Result.ok:
+            raise requests.HTTPError('<Error %s> %s' % (Result.status_code, Result.text))
+
+        Response['Result'] = Result.json()
+    except Exception as Error:
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Response
+
