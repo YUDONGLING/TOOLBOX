@@ -671,3 +671,291 @@ def __CommitImageUpload_AWS(Options: dict) -> dict:
 
     return Response
 
+
+def ApplyUploadInner(SpaceName: str, SignWith: str, Type: str = 'media' | 'image' | 'object', Count: int = 1, Options: dict = None) -> dict:
+    import os
+    import sys
+    import json
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+
+    DftOpts = {
+        'Region'  : '',
+        'Endpoint': None,
+        'AK'      : '',
+        'SK'      : '',
+        'STSToken': None,
+
+        'Header'  : {
+            'Accept'    : '*/*',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
+        },
+        'Params'  : {},
+        'Cookie'  : {},
+        'Timeout' : None,
+        'Verify'  : True,
+        'AllowRedirects': True
+    }
+    Options = MergeDictionaries(DftOpts, Options)
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        if SignWith not in ('SDK', 'AWS'):
+            raise ValueError('Unsupported SignWith Option: %s' % (SignWith))
+
+        if not Type in ('media', 'image', 'object'):
+            raise ValueError('Unsupported Type Option: %s, Expected: (`Media`, `Image`, `Object`)' % (Type))
+
+        MaxAllowCount = {'media' : 30, 'image' : 50, 'object': 50}[Type]
+        if not 1 <= Count <= MaxAllowCount:
+            raise ValueError('Invalid Count Value: %s for Type `%s`, Expected Range: [1, %s]' % (Count, Type, MaxAllowCount))
+
+        if not SpaceName     : raise ValueError('Missing Required Parameter: Space')
+        if not Options.AK    : raise ValueError('Missing Required Parameter: AK')
+        if not Options.SK    : raise ValueError('Missing Required Parameter: SK')
+        if not Options.Region: raise ValueError('Missing Required Parameter: Region')
+
+        Options.Endpoint = str(Options.Endpoint or '').strip().split('//', 1)[-1].split('/', 1)[0] or ('vod.bytedanceapi.com' if SignWith == 'AWS' else 'vod.volcengineapi.com')
+        Options.Params   = MergeDictionaries(Options.Params or {}, {
+            'SpaceName': SpaceName,
+            'FileType' : Type,
+            'IsInner'  : 1,
+            'UploadNum': Count
+        })
+    except Exception as Error:
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    try:
+        match SignWith:
+            case 'SDK': Result = __ApplyUploadInner_SDK(Options)
+            case 'AWS': Result = __ApplyUploadInner_AWS(Options)
+
+        if Result.Ec:
+            raise Exception(Result.Em)
+
+        Body = Result.get('Result')
+        if not isinstance(Body, dict):
+            raise ValueError('Invalid ApplyUploadInner Response: %s' % (Body))
+
+        Metadata = Body.get('ResponseMetadata', {})
+        if Metadata.get('Error'):
+            Error = Metadata['Error']
+            raise ValueError('API Error %s: %s' % (Error.get('Code') or Error.get('CodeN', 'NA'), Error.get('Message') or json.dumps(Error, ensure_ascii = False)))
+
+        UploadAddress = Body.get('Result', {}).get('InnerUploadAddress', {}).get('UploadNodes', [{}])[0]
+        if not UploadAddress.get('StoreInfos') or not UploadAddress.get('UploadHost') or not UploadAddress.get('SessionKey'):
+            raise ValueError('Invalid ApplyUploadInner Result, Missing UploadAddress')
+    except Exception as Error:
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Result
+
+
+def __ApplyUploadInner_SDK(Options: dict) -> dict:
+    raise NotImplementedError()
+
+
+def __ApplyUploadInner_AWS(Options: dict) -> dict:
+    import os
+    import sys
+    import requests
+    import urllib.parse
+
+    from botocore.auth import SigV4Auth
+    from botocore.awsrequest import AWSRequest
+    from botocore.credentials import Credentials
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        Params = MergeDictionaries(dict(Options.Params or {}), {
+            'Action'   : 'ApplyUploadInner',
+            'Version'  : '2020-11-19'
+        })
+
+        QueryItems = []
+        for Key in sorted(Params):
+            Value = Params[Key]
+            if isinstance(Value, (list, tuple)):
+                QueryItems.extend((Key, _Value) for _Value in Value)
+            else:
+                QueryItems.append((Key, Value))
+
+        Url    = 'https://%s/?%s' % (Options.Endpoint, urllib.parse.urlencode(QueryItems, doseq = True, quote_via = urllib.parse.quote, safe = '-_.~'))
+        Header = requests.structures.CaseInsensitiveDict()
+        for Key, Value in dict(Options.Header or {}).items():
+            LowerKey = Key.lower()
+            if LowerKey == 'host' or LowerKey == 'authorization' or LowerKey.startswith('x-amz-'):
+                continue
+            Header[Key] = Value
+        Header['Host'] = Options.Endpoint
+
+        Request = AWSRequest(method = 'GET', url = Url, data = b'', headers = {'Host': Options.Endpoint})
+        SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'vod', Options.Region).add_auth(Request)
+
+        for Key, Value in Request.headers.items():
+            if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
+                Header[Key] = Value
+
+        Result = requests.get(Url, headers = Header, cookies = Options.Cookie, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
+        if not Result.ok:
+            raise requests.HTTPError('<Error %s> %s' % (Result.status_code, Result.text))
+
+        Response['Result'] = Result.json()
+    except Exception as Error:
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Response
+
+
+def CommitUploadInner(SpaceName: str, SessionKey: str, SignWith: str, Options: dict = None) -> dict:
+    import os
+    import sys
+    import json
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+
+    DftOpts = {
+        'Region'  : '',
+        'Endpoint': None,
+        'AK'      : '',
+        'SK'      : '',
+        'STSToken': None,
+
+        'Header'  : {
+            'Accept'      : '*/*',
+            'Content-Type': 'text/plain;charset=UTF-8',
+            'User-Agent'  : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
+        },
+        'Params'  : {},
+        'Body'    : '',
+        'Cookie'  : {},
+        'Timeout' : None,
+        'Verify'  : True,
+        'AllowRedirects': True
+    }
+    Options = MergeDictionaries(DftOpts, Options)
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        if SignWith not in ('SDK', 'AWS'):
+            raise ValueError('Unsupported SignWith Option: %s' % (SignWith))
+
+        if not SpaceName     : raise ValueError('Missing Required Parameter: Space')
+        if not SessionKey    : raise ValueError('Missing Required Parameter: SessionKey')
+        if not Options.AK    : raise ValueError('Missing Required Parameter: AK')
+        if not Options.SK    : raise ValueError('Missing Required Parameter: SK')
+        if not Options.Region: raise ValueError('Missing Required Parameter: Region')
+
+        Options.Endpoint = str(Options.Endpoint or '').strip().split('//', 1)[-1].split('/', 1)[0] or ('vod.bytedanceapi.com' if SignWith == 'AWS' else 'vod.volcengineapi.com')
+        Options.Params   = MergeDictionaries(Options.Params or {}, {
+            'SpaceName' : SpaceName,
+            'SessionKey': SessionKey
+        })
+
+        if Options.Body is None:
+            Options.Body = ''
+        elif isinstance(Options.Body, (dict, list)):
+            Options.Body = json.dumps(Options.Body, ensure_ascii = False)
+    except Exception as Error:
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    try:
+        match SignWith:
+            case 'SDK': Result = __CommitUploadInner_SDK(Options)
+            case 'AWS': Result = __CommitUploadInner_AWS(Options)
+
+        if Result.Ec:
+            raise Exception(Result.Em)
+
+        Body = Result.get('Result')
+        if not isinstance(Body, dict):
+            raise ValueError('Invalid CommitUploadInner Response: %s' % (Body))
+
+        Metadata = Body.get('ResponseMetadata', {})
+        if Metadata.get('Error'):
+            Error = Metadata['Error']
+            raise ValueError('API Error %s: %s' % (Error.get('Code') or Error.get('CodeN', 'NA'), Error.get('Message') or json.dumps(Error, ensure_ascii = False)))
+
+        if not Body.get('Result', {}).get('Data'):
+            raise ValueError('Invalid CommitUploadInner Result, Missing Data')
+    except Exception as Error:
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Result
+
+
+def __CommitUploadInner_SDK(Options: dict) -> dict:
+    raise NotImplementedError()
+
+
+def __CommitUploadInner_AWS(Options: dict) -> dict:
+    import os
+    import sys
+    import requests
+    import urllib.parse
+
+    from botocore.auth import SigV4Auth
+    from botocore.awsrequest import AWSRequest
+    from botocore.credentials import Credentials
+
+    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+
+    Response = DotAccessDict({
+        'Ec': 0, 'Em': '', 'Result': None
+    })
+
+    try:
+        Params = MergeDictionaries(dict(Options.Params or {}), {
+            'Action' : 'CommitUploadInner',
+            'Version': '2020-11-19'
+        })
+
+        QueryItems = []
+        for Key in sorted(Params):
+            Value = Params[Key]
+            if isinstance(Value, (list, tuple)):
+                QueryItems.extend((Key, _Value) for _Value in Value)
+            else:
+                QueryItems.append((Key, Value))
+
+        Url    = 'https://%s/?%s' % (Options.Endpoint, urllib.parse.urlencode(QueryItems, doseq = True, quote_via = urllib.parse.quote, safe = '-_.~'))
+        Header = requests.structures.CaseInsensitiveDict()
+        for Key, Value in dict(Options.Header or {}).items():
+            LowerKey = Key.lower()
+            if LowerKey == 'host' or LowerKey == 'authorization' or LowerKey.startswith('x-amz-'):
+                continue
+            Header[Key] = Value
+        Header['Host'] = Options.Endpoint
+        Header.setdefault('Content-Type', 'text/plain;charset=UTF-8')
+
+        Request = AWSRequest(method = 'POST', url = Url, data = Options.Body or b'', headers = {'Host': Options.Endpoint})
+        SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'vod', Options.Region).add_auth(Request)
+
+        for Key, Value in Request.headers.items():
+            if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
+                Header[Key] = Value
+
+        Result = requests.post(Url, headers = Header, cookies = Options.Cookie, data = Options.Body, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
+        if not Result.ok:
+            raise requests.HTTPError('<Error %s> %s' % (Result.status_code, Result.text))
+
+        Response['Result'] = Result.json()
+    except Exception as Error:
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+
+    return Response
