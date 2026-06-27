@@ -536,7 +536,7 @@ def __QueryIpLocation_Pconline(Ip: str, Options: dict) -> list:
             Isp = Addr
             for Item in [Rsp.get('pro'), Rsp.get('city'), Rsp.get('region')]:
                 Isp = Isp.replace(Item or '', '')
-            return ['中国', Rsp.get('pro', ''), Rsp.get('city', ''), Rsp.get('region', ''), '', Isp.strip()]
+            return ['中国', Rsp.get('pro', ''), Rsp.get('city', ''), Rsp.get('region', ''), '', '中国移动通信集团公司' if Isp.strip() == '移通' else Isp]
 
         return [Addr, '', '', '', '', '']
     except Exception as Error:
