@@ -49,7 +49,7 @@ def TimeUUID_Sort(Path: str, Separator: str = None) -> dict:
     try:
         Files = os.listdir(Path)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Metas = []
@@ -57,12 +57,12 @@ def TimeUUID_Sort(Path: str, Separator: str = None) -> dict:
             _ = TimeUUID_Decode(File, Separator)
             if _['Ec'] == 0: Metas.append({'Time': _['Result'], 'Name': File, 'Path': os.path.join(Path, File)})
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     
     try:
         Response['Result'] = sorted(Metas, key = lambda Info: Info['Time'])
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     
     return Response
 
@@ -88,13 +88,13 @@ def TimeUUID_Decode(UUID: str, Separator: str = None) -> dict:
             else:
                 Separator = ''
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         UUID = UUID.replace(Separator, '')
         Seed = (int(UUID[-2], 16), int(UUID[-1], 16))
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Time = ''
@@ -103,6 +103,6 @@ def TimeUUID_Decode(UUID: str, Separator: str = None) -> dict:
             Time += chr(Hexa // ((Seed[0] % 8 + 1) * (Seed[1] % 8 + 1)))
         Response['Result'] = int(Time)
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response

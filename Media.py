@@ -100,7 +100,7 @@ def __ReadOnlineImageInfo(Path: str, Options: dict = None) -> tuple:
                            allow_redirects = Options.AllowRedirects)
 
         if not 200 <= Rsp.status_code < 300:
-            raise Exception(f'HTTP Code is {Rsp.status_code}')
+            raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Rsp.status_code, Rsp.text or None))
 
         for Chunk in Rsp.iter_content(chunk_size = 1024 * 32):
             if not Chunk:
@@ -108,7 +108,7 @@ def __ReadOnlineImageInfo(Path: str, Options: dict = None) -> tuple:
 
             ReadBytes += len(Chunk)
             if MaxProbeBytes > 0 and ReadBytes > MaxProbeBytes:
-                raise Exception('Couldn\'t Read Image Size Within %s Bytes' % MaxProbeBytes)
+                raise Exception('Can Not Read Image Size Within MaxProbeBytes Bytes: %s' % MaxProbeBytes)
 
             Parser.feed(Chunk)
             if Parser.image:
@@ -167,7 +167,7 @@ def __ReadVideoInfo_FFProbe(Path: str, Options: dict = None) -> tuple:
     Result = subprocess.run(Command, capture_output = True, text = True, timeout = int(float(Timeout or 10)) + 5)
 
     if Result.returncode != 0:
-        raise Exception((Result.stderr or Result.stdout or 'ffprobe Failed').strip())
+        raise Exception((Result.stderr or Result.stdout or 'FFProbe Error').strip())
 
     Info = json.loads(Result.stdout or '{}')
     Stream = (Info.get('streams') or [{}])[0]
@@ -175,7 +175,7 @@ def __ReadVideoInfo_FFProbe(Path: str, Options: dict = None) -> tuple:
     Height = int(Stream.get('height') or 0)
 
     if Width <= 0 or Height <= 0:
-        raise Exception('Couldn\'t Read Video Stream Size from File %s' % Path)
+        raise Exception('Can Not Read Video Stream Size from File: %s' % Path)
 
     return Height, Width
 
@@ -187,12 +187,12 @@ def __ReadVideoInfo_CV2(Path: str) -> tuple:
     try:
         with SuppressStderr():
             Mda = cv2.VideoCapture(Path)
-            if not Mda.isOpened(): raise Exception('Couldn\'t Read Video Stream from File %s' % Path)
+            if not Mda.isOpened(): raise Exception('Can Not Read Video Stream from File: %s' % Path)
 
             Height = int(Mda.get(cv2.CAP_PROP_FRAME_HEIGHT))
             Width  = int(Mda.get(cv2.CAP_PROP_FRAME_WIDTH))
         if Width <= 0 or Height <= 0:
-            raise Exception('Couldn\'t Read Video Stream Size from File %s' % Path)
+            raise Exception('Can Not Read Video Stream Size from File: %s' % Path)
 
         return Height, Width
     finally:
@@ -236,7 +236,7 @@ def __ReadUnknownOnlineInfo(Path: str, Options: dict = None, Size: int = -1, Med
         except Exception as Error:
             Errors.append('%s: %s' % (Reader, Error))
 
-    raise Exception('Couldn\'t Read Media Info from Url %s. %s' % (Path, '; '.join(Errors)))
+    raise Exception('Can Not Read Media Info from Url: %s - %s' % (Path, '; '.join(Errors)))
 
 
 def GetInfo(Path: str, Options: dict = None) -> dict:
@@ -265,7 +265,7 @@ def __GetLocal(Path: str, Options: dict = None) -> dict:
     try:
         Response['Size'] = os.path.getsize(Path)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         MediaType = __GuessMediaType(Path)
@@ -301,9 +301,9 @@ def __GetLocal(Path: str, Options: dict = None) -> dict:
                     except Exception:
                         Response['Height'], Response['Width'] = __ReadVideoInfo_CV2(Path)
                 except Exception as Error:
-                    raise Exception('Couldn\'t Read Media Info from File %s. Image Error: %s; Video Error: %s' % (Path, ImageError, Error))
+                    raise Exception('Can Not Read Media Info from File: %s - Image Error: %s; Video Error: %s' % (Path, ImageError, Error))
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -347,15 +347,15 @@ def __GetOnline(Path: str, Options: dict = None) -> dict:
         if 200 <= Head['Code'] < 400 and (Head['Content-Length'] > 1024 or Head['Content-Length'] == -1):
             Response['Size'] = Head['Content-Length']
         else:
-            raise Exception(f'HTTP Code is {Head["Code"]}, Content-Length is {Head["Content-Length"]}')
+            raise Exception('<Response [%s]> with Content-Length = %s' % (Head['Code'], Head['Content-Length']))
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         MediaType = __GuessMediaType(Head['Location'] or Path, Head['Content-Type'])
         Response['Height'], Response['Width'] = __ReadUnknownOnlineInfo(Path, Options, Response['Size'], MediaType)
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -386,9 +386,9 @@ def MakeThumbnail(Path: str, Options: dict = None) -> dict:
         if os.path.splitext(Path)[-1].upper() in ['.PDF']:
             return __MakeThumbnail_FITZ(Path, Options)
 
-        raise TypeError('Unsupported File Type of %s' % os.path.splitext(Path)[-1].upper())
+        raise TypeError('Unsupported File Extension: %s' % os.path.splitext(Path)[-1].upper())
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -423,7 +423,7 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
         if os.path.dirname(Options.Path):
             os.makedirs(os.path.dirname(Options.Path), exist_ok = True)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         pillow_heif.register_heif_opener()
@@ -460,13 +460,13 @@ def __MakeThumbnail_PIL(Path: str, Options: dict = None) -> dict:
         Response['Path'] = Options.Path
         Response['Size'] = os.path.getsize(Options.Path)
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         if Options.RemoveOrg:
             os.remove(Path)
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -500,23 +500,23 @@ def __MakeThumbnail_CV2(Path: str, Options: dict = None) -> dict:
         if os.path.dirname(Options.Path):
             os.makedirs(os.path.dirname(Options.Path), exist_ok = True)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         with SuppressStderr():
             Mda = cv2.VideoCapture(Path)
-            if not Mda.isOpened(): raise Exception('Couldn\'t Read Video Stream from File %s' % Path)
+            if not Mda.isOpened(): raise Exception('Can Not Read Video Stream from File: %s' % Path)
 
             Pos = int(min(Mda.get(cv2.CAP_PROP_FRAME_COUNT) / (Mda.get(cv2.CAP_PROP_FPS) or 1) * 1000, 0.05 * 1000))
             Mda.set(cv2.CAP_PROP_POS_MSEC, Pos)
 
             Success, Frame = Mda.read()
         if not Success or Frame is None:
-            raise Exception('Couldn\'t Read Video Frame from File %s' % Path)
+            raise Exception('Can Not Read Video Frame from File: %s' % Path)
 
         cv2.imwrite(Options.Path, Frame)
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     finally:
         with SuppressStderr():
             try: Mda.release()
@@ -526,7 +526,7 @@ def __MakeThumbnail_CV2(Path: str, Options: dict = None) -> dict:
         if Options.RemoveOrg:
             os.remove(Path)
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return __MakeThumbnail_PIL(Options.Path, Options = {
                                                     'Path'     : '%s-%s.jpg' % (Path, TimeUUID()),
@@ -566,7 +566,7 @@ def __MakeThumbnail_FITZ(Path: str, Options: dict = None) -> dict:
         if os.path.dirname(Options.Path):
             os.makedirs(os.path.dirname(Options.Path), exist_ok = True)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     Pdf = None
     try:
@@ -575,7 +575,7 @@ def __MakeThumbnail_FITZ(Path: str, Options: dict = None) -> dict:
         Img = PIL.Image.frombytes('RGB', [Img.width, Img.height], Img.samples)
         Img.save(Options.Path, format = 'JPEG')
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     finally:
         try: Pdf.close()
         except: pass
@@ -584,7 +584,7 @@ def __MakeThumbnail_FITZ(Path: str, Options: dict = None) -> dict:
         if Options.RemoveOrg:
             os.remove(Path)
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return __MakeThumbnail_PIL(Options.Path, Options = {
                                                     'Path'     : '%s-%s.jpg' % (Path, TimeUUID()),

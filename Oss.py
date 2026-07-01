@@ -25,7 +25,7 @@ def _ValidateAndInitEndPoint(
         **Kwargs
         ) -> object:
     if RequireCheck and RequireField and [_Key for _Key in RequireField if not Options[_Key]]:
-        raise Exception('Missing Required Fields')
+        raise Exception('Missing Required Parameter: %s' % ', '.join([_Key for _Key in RequireField if not Options[_Key]]))
 
     if Options.Endpoint is None: Options.Endpoint = {}
 
@@ -59,7 +59,7 @@ def _FormatContentDisposition(Value: str = None) -> str:
 def _ExtractResponse(OSSSDKResponse: object) -> object:
     if hasattr(OSSSDKResponse, 'resp'):
         return OSSSDKResponse.resp
-    raise Exception('Can Not Extract Response from OSS SDK Result Object, Please Check the Result Object Directly for Details')
+    raise Exception('Can Not Extract Response from OSS SDK Result Object')
 
 
 def __Service(AK: str, SK: str, Region: str, STSToken: str = None, Timeout: int = None) -> object:
@@ -202,7 +202,7 @@ def SignUrl(Method: str, Key: str, Header: dict = None, Param: dict = None, Expi
             EndPointFunc = __EndPoint
         )
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         if Key.removeprefix('/') == '':
@@ -239,7 +239,7 @@ def SignUrl(Method: str, Key: str, Header: dict = None, Param: dict = None, Expi
             Response['Url']['Https']   = 'https://%s' % Response['Url']['NoSheme']
             Response['Url']['Http']    = 'http://%s'  % Response['Url']['NoSheme']
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -275,7 +275,7 @@ def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict =
 
     try:
         if Key is None and Url is None:
-            raise Exception('Either Key or Url Must be Given')
+            raise Exception('Missing Required Parameter: Key or Url')
 
         Options = _ValidateAndInitEndPoint(
             Options,
@@ -283,7 +283,7 @@ def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict =
             EndPointFunc = __EndPoint
         )
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         if Url is None:
@@ -333,9 +333,9 @@ def GetObject(Key: str = None, Url: str = None, Path: str = None, Header: dict =
                 progress_callback = ProgressCallback
             )
     except NotFound  as Error:
-        Response['Ec'] = 40400; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40400; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -376,7 +376,7 @@ def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = N
             EndPointFunc = __EndPoint
         )
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         if Path and os.path.dirname(Path):
@@ -404,7 +404,7 @@ def MultiPartGetObject(Key: str, Path: str, Header: dict = None, Param: dict = N
             headers            = Header
         )
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -437,10 +437,10 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
 
     try:
         if Key is None and Url is None:
-            raise Exception('Either Key or Url Must be Given')
+            raise Exception('Missing Required Parameter: Key or Url')
 
         if Path is None and Data is None:
-            raise Exception('Either Path or Data Must be Given')
+            raise Exception('Missing Required Parameter: Path or Data')
 
         Options = _ValidateAndInitEndPoint(
             Options,
@@ -448,7 +448,7 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
             EndPointFunc = __EndPoint
         )
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         if Url is None:
@@ -493,7 +493,7 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
                 progress_callback = ProgressCallback
             )
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -540,7 +540,7 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, MultipartField: dict
 
         Header  = requests.structures.CaseInsensitiveDict(Header or {})
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     def _Callback(Monitor):
         if ProgressCallback: ProgressCallback(Monitor.bytes_read, Monitor.len)
@@ -556,11 +556,11 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, MultipartField: dict
             Results = requests.post(url = 'https://%s/' % Options.Endpoint.removesuffix('/'), data = Monitor, headers = Header, timeout = Options.Timeout)
 
         if not Results.ok:
-            raise requests.exceptions.HTTPError(Results.text)
-        else:        
+            raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Results.status_code, Results.text or None))
+        else:
             Response['Result'] = Results
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -599,7 +599,7 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
             EndPointFunc = __EndPoint
         )
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Bucket = __Bucket(
@@ -623,7 +623,7 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
             progress_callback   = ProgressCallback
         )
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -655,14 +655,14 @@ def AppendObject(Key: str, Path: str = None, Data: str = None, Header: dict = No
 
     try:
         if Path is None and Data is None:
-            raise Exception('Either Path or Data Must be Given')
+            raise Exception('Missing Required Parameter: Path or Data')
 
         Options = _ValidateAndInitEndPoint(
             Options,
             EndPointFunc = __EndPoint
         )
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Bucket = __Bucket(
@@ -701,7 +701,7 @@ def AppendObject(Key: str, Path: str = None, Data: str = None, Header: dict = No
                 progress_callback = ProgressCallback
             )
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -735,7 +735,7 @@ def DeleteObject(Key: str | list, Header: dict = None, Param: dict = None, Optio
             EndPointFunc = __EndPoint
         )
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Bucket = __Bucket(
@@ -760,6 +760,6 @@ def DeleteObject(Key: str | list, Header: dict = None, Param: dict = None, Optio
                 headers  = Header
             )
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response

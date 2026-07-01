@@ -130,10 +130,10 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
 
     try:
         if Key is None and Url is None:
-            raise Exception('Either Key or Url Must be Given')
+            raise Exception('Missing Required Parameter: Key or Url')
 
         if Path is None and Data is None:
-            raise Exception('Either Path or Data Must be Given')
+            raise Exception('Missing Required Parameter: Path or Data')
 
         Options = _ValidateAndInitEndPoint(
             Options,
@@ -145,7 +145,7 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
 
         Header  = requests.structures.CaseInsensitiveDict(Header or {})
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         if Url is None:
@@ -200,7 +200,7 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
 
             Response['Result'] = tos.models2.PutObjectOutput(_ExtractResponse(Result['Result']))
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -263,7 +263,7 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
 
         Header  = requests.structures.CaseInsensitiveDict(Header or {})
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Bucket = __Bucket(
@@ -292,7 +292,7 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
             data_transfer_listener = _AdaptCallback(ProgressCallback)
         )
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -318,8 +318,9 @@ def ApplyImageUpload(Service: str, SignWith: str, Count: int = 1, Options: dict 
 
     from volcengine.imagex.v2.imagex_trait import service_info_map
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Region'  : '',
@@ -346,10 +347,10 @@ def ApplyImageUpload(Service: str, SignWith: str, Count: int = 1, Options: dict 
 
     try:
         if SignWith not in ('SDK', 'AWS'):
-            raise ValueError('Unsupported SignWith Option: %s' % (SignWith))
+            raise ValueError('Unsupported Sign Method: %s' % (SignWith))
 
         if not 1 <= Count <= 10:
-            raise ValueError('Invalid Count Value: %s, Expected Range: [1, 10]' % (Count))
+            raise ValueError('Invalid Count of %s, Expected in Range [1, 10]' % (Count))
 
         if not Service       : raise ValueError('Missing Required Parameter: Service')
         if not Options.AK    : raise ValueError('Missing Required Parameter: AK')
@@ -365,7 +366,7 @@ def ApplyImageUpload(Service: str, SignWith: str, Count: int = 1, Options: dict 
                 'imagex.volcengineapi.com' if SignWith == 'SDK' else 'imagex.bytedanceapi.com')
         Options.Params   = MergeDictionaries(Options.Params or {}, {'ServiceId': Service, 'UploadNum': Count})
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         match SignWith:
@@ -377,18 +378,18 @@ def ApplyImageUpload(Service: str, SignWith: str, Count: int = 1, Options: dict 
 
         Body = Result.get('Result')
         if not isinstance(Body, dict):
-            raise ValueError('Invalid ApplyImageUpload Response: %s' % (Body))
+            raise ValueError('Invalid ApplyUpload Result: %s' % (Body))
 
         Metadata = Body.get('ResponseMetadata', {})
         if Metadata.get('Error'):
             Error = Metadata['Error']
-            raise ValueError('API Error %s: %s' % (Error.get('Code') or Error.get('CodeN', 'NA'), Error.get('Message') or json.dumps(Error, ensure_ascii = False)))
+            raise ValueError('<Interface [%s]> %s' % (Error.get('Code') or Error.get('CodeN') or None, Error.get('Message') or json.dumps(Error, ensure_ascii = False) or None))
 
         UploadAddress = Body.get('Result', {}).get('UploadAddress', {})
         if not UploadAddress.get('StoreInfos') or not UploadAddress.get('UploadHosts'):
-            raise ValueError('Invalid ApplyImageUpload Result, Missing UploadAddress')
+            raise ValueError('Invalid ApplyUpload Result, Missing UploadAddress: %s' % (Body))
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Result
 
@@ -399,8 +400,9 @@ def __ApplyImageUpload_SDK(Options: dict) -> dict:
 
     from volcengine.imagex.v2.imagex_service import ImagexService
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
@@ -417,12 +419,12 @@ def __ApplyImageUpload_SDK(Options: dict) -> dict:
             Client.set_socket_timeout(Options.Timeout)
             Client.set_connection_timeout(Options.Timeout)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Response['Result'] = Client.apply_upload(Options.Params)
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -437,8 +439,9 @@ def __ApplyImageUpload_AWS(Options: dict) -> dict:
     from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
@@ -476,11 +479,11 @@ def __ApplyImageUpload_AWS(Options: dict) -> dict:
 
         Result = requests.get(Url, headers = Header, cookies = Options.Cookie, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
         if not Result.ok:
-            raise requests.HTTPError('<Error %s> %s' % (Result.status_code, Result.text))
+            raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Result.status_code, Result.text or None))
 
         Response['Result'] = Result.json()
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -492,8 +495,9 @@ def CommitImageUpload(Service: str, SessionKey: str, SignWith: str, Options: dic
 
     from volcengine.imagex.v2.imagex_trait import service_info_map
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Region'  : '',
@@ -522,7 +526,7 @@ def CommitImageUpload(Service: str, SessionKey: str, SignWith: str, Options: dic
 
     try:
         if SignWith not in ('SDK', 'AWS'):
-            raise ValueError('Unsupported SignWith Option: %s' % (SignWith))
+            raise ValueError('Unsupported Sign Method: %s' % (SignWith))
 
         if not Service       : raise ValueError('Missing Required Parameter: Service')
         if not SessionKey    : raise ValueError('Missing Required Parameter: SessionKey')
@@ -547,7 +551,7 @@ def CommitImageUpload(Service: str, SessionKey: str, SignWith: str, Options: dic
         elif isinstance(Options.Body, (dict, list)):
             Options.Body = json.dumps(Options.Body, ensure_ascii = False)
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         match SignWith:
@@ -559,22 +563,25 @@ def CommitImageUpload(Service: str, SessionKey: str, SignWith: str, Options: dic
 
         Body = Result.get('Result')
         if not isinstance(Body, dict):
-            raise ValueError('Invalid CommitImageUpload Response: %s' % (Body))
+            raise ValueError('Invalid CommitUpload Result: %s' % (Body))
 
         Metadata = Body.get('ResponseMetadata', {})
         if Metadata.get('Error'):
             Error = Metadata['Error']
-            raise ValueError('API Error %s: %s' % (Error.get('Code') or Error.get('CodeN', 'NA'), Error.get('Message') or json.dumps(Error, ensure_ascii = False)))
+            raise ValueError('<Interface [%s]> %s' % (Error.get('Code') or Error.get('CodeN') or None, Error.get('Message') or json.dumps(Error, ensure_ascii = False) or None))
 
         CommitResults = Body.get('Result', {}).get('Results', [])
         if not CommitResults:
-            raise ValueError('Invalid CommitImageUpload Result, Missing Results')
+            raise ValueError('Invalid CommitUpload Result: %s' % (Body))
+    except Exception as Error:
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
+    try:
         FailedResults = [_Result for _Result in CommitResults if _Result.get('UriStatus') != 2000]
         if FailedResults:
-            raise ValueError('Invalid CommitImageUpload Result: %s' % (json.dumps(FailedResults, ensure_ascii = False)))
+            raise ValueError('Upload Failed: %s' % (FailedResults))
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Result
 
@@ -585,8 +592,9 @@ def __CommitImageUpload_SDK(Options: dict) -> dict:
 
     from volcengine.imagex.v2.imagex_service import ImagexService
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
@@ -603,12 +611,12 @@ def __CommitImageUpload_SDK(Options: dict) -> dict:
             Client.set_socket_timeout(Options.Timeout)
             Client.set_connection_timeout(Options.Timeout)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Response['Result'] = Client.commit_upload(Options.Params, Options.Body)
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -623,8 +631,9 @@ def __CommitImageUpload_AWS(Options: dict) -> dict:
     from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
@@ -663,11 +672,11 @@ def __CommitImageUpload_AWS(Options: dict) -> dict:
 
         Result = requests.post(Url, headers = Header, cookies = Options.Cookie, data = Options.Body, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
         if not Result.ok:
-            raise requests.HTTPError('<Error %s> %s' % (Result.status_code, Result.text))
+            raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Result.status_code, Result.text or None))
 
         Response['Result'] = Result.json()
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -677,8 +686,9 @@ def ApplyUploadInner(SpaceName: str, SignWith: str, Type: str = 'media' or 'imag
     import sys
     import json
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Region'  : '',
@@ -705,14 +715,14 @@ def ApplyUploadInner(SpaceName: str, SignWith: str, Type: str = 'media' or 'imag
 
     try:
         if SignWith not in ('SDK', 'AWS'):
-            raise ValueError('Unsupported SignWith Option: %s' % (SignWith))
+            raise ValueError('Unsupported Sign Method: %s' % (SignWith))
 
         if not Type in ('media', 'image', 'object'):
-            raise ValueError('Unsupported Type Option: %s, Expected: (`Media`, `Image`, `Object`)' % (Type))
+            raise ValueError('Unsupported Type: %s, Expected in (`Media`, `Image`, `Object`)' % (Type))
 
         MaxAllowCount = {'media' : 30, 'image' : 50, 'object': 50}[Type]
         if not 1 <= Count <= MaxAllowCount:
-            raise ValueError('Invalid Count Value: %s for Type `%s`, Expected Range: [1, %s]' % (Count, Type, MaxAllowCount))
+            raise ValueError('Invalid Count of %s, Expected in Range [1, %s]' % (Count, MaxAllowCount))
 
         if not SpaceName     : raise ValueError('Missing Required Parameter: Space')
         if not Options.AK    : raise ValueError('Missing Required Parameter: AK')
@@ -727,7 +737,7 @@ def ApplyUploadInner(SpaceName: str, SignWith: str, Type: str = 'media' or 'imag
             'UploadNum': Count
         })
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         match SignWith:
@@ -739,18 +749,18 @@ def ApplyUploadInner(SpaceName: str, SignWith: str, Type: str = 'media' or 'imag
 
         Body = Result.get('Result')
         if not isinstance(Body, dict):
-            raise ValueError('Invalid ApplyUploadInner Response: %s' % (Body))
+            raise ValueError('Invalid ApplyUpload Result: %s' % (Body))
 
         Metadata = Body.get('ResponseMetadata', {})
         if Metadata.get('Error'):
             Error = Metadata['Error']
-            raise ValueError('API Error %s: %s' % (Error.get('Code') or Error.get('CodeN', 'NA'), Error.get('Message') or json.dumps(Error, ensure_ascii = False)))
+            raise ValueError('<Interface [%s]> %s' % (Error.get('Code') or Error.get('CodeN') or None, Error.get('Message') or json.dumps(Error, ensure_ascii = False) or None))
 
         UploadAddress = Body.get('Result', {}).get('InnerUploadAddress', {}).get('UploadNodes', [{}])[0]
         if not UploadAddress.get('StoreInfos') or not UploadAddress.get('UploadHost') or not UploadAddress.get('SessionKey'):
-            raise ValueError('Invalid ApplyUploadInner Result, Missing UploadAddress')
+            raise ValueError('Invalid ApplyUpload Result, Missing UploadAddress: %s' % (Body))
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Result
 
@@ -769,8 +779,9 @@ def __ApplyUploadInner_AWS(Options: dict) -> dict:
     from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
@@ -808,11 +819,11 @@ def __ApplyUploadInner_AWS(Options: dict) -> dict:
 
         Result = requests.get(Url, headers = Header, cookies = Options.Cookie, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
         if not Result.ok:
-            raise requests.HTTPError('<Error %s> %s' % (Result.status_code, Result.text))
+            raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Result.status_code, Result.text or None))
 
         Response['Result'] = Result.json()
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -822,8 +833,9 @@ def CommitUploadInner(SpaceName: str, SessionKey: str, SignWith: str, Options: d
     import sys
     import json
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     DftOpts = {
         'Region'  : '',
@@ -852,7 +864,7 @@ def CommitUploadInner(SpaceName: str, SessionKey: str, SignWith: str, Options: d
 
     try:
         if SignWith not in ('SDK', 'AWS'):
-            raise ValueError('Unsupported SignWith Option: %s' % (SignWith))
+            raise ValueError('Unsupported Sign Method: %s' % (SignWith))
 
         if not SpaceName     : raise ValueError('Missing Required Parameter: Space')
         if not SessionKey    : raise ValueError('Missing Required Parameter: SessionKey')
@@ -871,7 +883,7 @@ def CommitUploadInner(SpaceName: str, SessionKey: str, SignWith: str, Options: d
         elif isinstance(Options.Body, (dict, list)):
             Options.Body = json.dumps(Options.Body, ensure_ascii = False)
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         match SignWith:
@@ -883,17 +895,17 @@ def CommitUploadInner(SpaceName: str, SessionKey: str, SignWith: str, Options: d
 
         Body = Result.get('Result')
         if not isinstance(Body, dict):
-            raise ValueError('Invalid CommitUploadInner Response: %s' % (Body))
+            raise ValueError('Invalid CommitUpload Result: %s' % (Body))
 
         Metadata = Body.get('ResponseMetadata', {})
         if Metadata.get('Error'):
             Error = Metadata['Error']
-            raise ValueError('API Error %s: %s' % (Error.get('Code') or Error.get('CodeN', 'NA'), Error.get('Message') or json.dumps(Error, ensure_ascii = False)))
+            raise ValueError('<Interface [%s]> %s' % (Error.get('Code') or Error.get('CodeN') or None, Error.get('Message') or json.dumps(Error, ensure_ascii = False) or None))
 
         if not Body.get('Result', {}).get('Data'):
-            raise ValueError('Invalid CommitUploadInner Result, Missing Data')
+            raise ValueError('Invalid CommitUpload Result: %s' % (Body))
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Result
 
@@ -912,8 +924,9 @@ def __CommitUploadInner_AWS(Options: dict) -> dict:
     from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
 
-    if not __package__: sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    from Pkg.Init import DotAccessDict, MergeDictionaries; from Pkg.Log import MakeErrorMessage
+    if not __package__:
+          from  Init import DotAccessDict, MergeDictionaries; from  Log import MakeErrorMessage
+    else: from .Init import DotAccessDict, MergeDictionaries; from .Log import MakeErrorMessage
 
     Response = DotAccessDict({
         'Ec': 0, 'Em': '', 'Result': None
@@ -952,10 +965,10 @@ def __CommitUploadInner_AWS(Options: dict) -> dict:
 
         Result = requests.post(Url, headers = Header, cookies = Options.Cookie, data = Options.Body, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
         if not Result.ok:
-            raise requests.HTTPError('<Error %s> %s' % (Result.status_code, Result.text))
+            raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Result.status_code, Result.text or None))
 
         Response['Result'] = Result.json()
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response

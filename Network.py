@@ -74,7 +74,7 @@ def QueryDns(Host: str, Type: str = 'A', Global: bool = None, Region: str | list
         Rsp = requests.get(Url, headers = Hed, timeout = Options.Timeout).json()
 
         if Rsp['Status'] != 0:
-            raise Exception(f'HTTP DNS Query Failed, Status is {Rsp["Status"]}, Response is {Rsp}')
+            raise ValueError('<Interface [%s]> %s' % (Rsp.get('Status'), Rsp or None))
         else:
             Recode = [Item['data'] for Item in Rsp['Answer'] if Item['type'] == Type]
     except Exception as Error:
@@ -499,7 +499,7 @@ def __QueryIpLocation_Lecloud(Ip: str, Options: dict) -> list:
         if not __1 or not __2 or __1.group(1) != Ip or __2.group(1) != Ip: raise ValueError('Response IP Mismatch')
 
         __3 = re.search(r'<h3>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/([^<]+)</h3>', Rsp)
-        if not __3: raise ValueError('Location Is Empty')
+        if not __3: raise ValueError('Response Location Empty')
         Rsp = [_.replace('未知运营商', '').replace('未知', '').strip() for _ in (__3.group(1).split('-') + [''] * 4)[:4]]
 
         return [Rsp[0], Rsp[1], Rsp[2], '', '', Rsp[3]]

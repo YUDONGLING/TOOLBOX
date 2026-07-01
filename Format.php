@@ -116,7 +116,7 @@ function SafePath(string $Path, ?array $Options = null): array {
         $Path = function_exists("mb_substr") ? mb_substr($Path, 0, $Options["MaxLength"], "UTF-8") : substr($Path, 0, $Options["MaxLength"]);
         $Response["Path"] = rtrim($Path);
     } catch (Throwable $Error) {
-        $Response["Ec"] = 50000; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50000; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     return $Response;
@@ -153,7 +153,7 @@ function ConvertSize(int | float $Size, string $Unit = "B", ?array $Options = nu
             throw new ValueError("Unit Must be in B, KB, MB, GB, TB or PB");
         }
     } catch (Throwable $Error) {
-        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     try {
@@ -172,7 +172,7 @@ function ConvertSize(int | float $Size, string $Unit = "B", ?array $Options = nu
             }
         }
     } catch (Throwable $Error) {
-        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     try {
@@ -186,7 +186,7 @@ function ConvertSize(int | float $Size, string $Unit = "B", ?array $Options = nu
 
         $Response["Result"] = $Result;
     } catch (Throwable $Error) {
-        $Response["Ec"] = 50003; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50003; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     return $Response;

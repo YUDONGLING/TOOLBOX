@@ -45,7 +45,7 @@ class PostmanRequest(object):
 
         # Postman Side Error
         if Response.status_code != 200:
-            raise requests.exceptions.HTTPError('Error: %s, %s' % (Response.status_code, Response.text))
+            raise requests.exceptions.HTTPError('<Response.Postman [%s]> %s' % (Response.status_code, Response.text or None))
 
         # Target Server Side Error
         try: ResponseJson = Response.json()
@@ -55,9 +55,9 @@ class PostmanRequest(object):
             ResponseEm = ResponseJson.get('Em'.lower()) or ''
             Et, Em = ResponseEm.split(': ', 1) if ': ' in ResponseEm else ('', ResponseEm)
             match Et:
-                case 'ValueError': raise ValueError('TargetServer %s@%s' % (Et, Em))
-                case 'TypeError' : raise TypeError ('TargetServer %s@%s' % (Et, Em))
-                case _           : raise Exception ('TargetServer %s@%s' % (Et, Em))
+                case 'ValueError': raise ValueError('<Response.RemoteServer [%s]> %s' % (Et or None, Em))
+                case 'TypeError' : raise TypeError ('<Response.RemoteServer [%s]> %s' % (Et or None, Em))
+                case _           : raise Exception ('<Response.RemoteServer [%s]> %s' % (Et or None, Em))
 
         return PostmanResponse(self, ResponseJson.get('Data'.lower()))
 

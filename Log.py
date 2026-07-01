@@ -35,19 +35,19 @@ def MakeLog(Content: str, Path: str = 'Log/{{YYYY}}-{{MM}}-{{DD}}.txt') -> dict:
         if os.path.dirname(Path):
             os.makedirs(os.path.dirname(Path), exist_ok = True)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         with portalocker.Lock(Path, 'a', encoding = 'utf-8') as File:
             File.write('[%s] %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S', TimeConst), Content))
         Response['Result'] = Path
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
 
-def MakeErrorMessage(Error: Exception) -> str:
+def MakeErrorMessage(Error: Exception, Code: any = None) -> str:
     '''
     Make Error Message, Include File, Line Number and Function Name, for Debugging.
     '''
@@ -71,4 +71,15 @@ def MakeErrorMessage(Error: Exception) -> str:
     else:
         Type = 'Error'
 
-    return 'File "%s", Line %s, in %s @%s: %s.' % (Modu, Line, Func, Type, str(Error).title().rstrip('.'))
+    S_Message = str(Error).rstrip('.')
+    T_Message = S_Message.title()
+
+    if len(S_Message) == len(T_Message):
+        Message = ''.join(
+            S if S.isupper() else T
+            for S, T in zip(S_Message, T_Message)
+        )
+    else:
+        Message = T_Message
+
+    return 'File "%s", Line %s, in %s %s@%s: %s.' % (Modu, Line, Func, Code if Code is not None else '', Type, Message)

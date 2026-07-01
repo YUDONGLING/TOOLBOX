@@ -17,14 +17,14 @@ def CreateDB(Path: str) -> dict:
         if os.path.dirname(Path):
             os.makedirs(os.path.dirname(Path), exist_ok = True)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Conn = sqlite3.connect(Path)
         Conn.close()
         Response['Result'] = Path
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -51,14 +51,14 @@ def ExecuteDB(Path: str, Query: str, Param: tuple = None) -> dict:
     except Exception as Error:
         try: Conn.close()
         except: pass
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Response['Result'] = Cursor.fetchall() if Cursor.description is not None else []
     except Exception as Error:
         try: Conn.close()
         except: pass
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         if Conn.in_transaction:
@@ -66,7 +66,7 @@ def ExecuteDB(Path: str, Query: str, Param: tuple = None) -> dict:
     except Exception as Error:
         try: Conn.rollback() if Conn.in_transaction else None
         except: pass
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     finally:
         try: Conn.close()
         except: pass

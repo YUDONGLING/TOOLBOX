@@ -51,7 +51,7 @@ def DingTalk(Token: str, Topic: str = '', Message: list = None) -> dict:
 
         MessageBody += '<font color=#6A65FF>%s</font>' % Topic
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Url = 'https://oapi.dingtalk.com/robot/send?access_token=%s' % Token.removeprefix('http://oapi.dingtalk.com/robot/send?access_token=').removeprefix('https://oapi.dingtalk.com/robot/send?access_token=')
@@ -68,9 +68,9 @@ def DingTalk(Token: str, Topic: str = '', Message: list = None) -> dict:
         Rsp = requests.post(Url, headers = Hed, json = Dat, timeout = 10).json()
 
         if Rsp.get('errcode', -1) != 0:
-            raise Exception('%s-%s' % (Rsp.get('errcode', 'Unknown'), Rsp.get('errmsg', 'Unknown')))
+            raise ValueError('<Interface [%s]> %s' % (Rsp.get('errcode'), Rsp.get('errmsg') or Rsp or None))
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     finally:
         try: Rsp.close()
         except: pass

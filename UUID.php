@@ -58,7 +58,7 @@ function TimeUUID_Sort(string $Path, string $Separator = null): array {
     try {
         $Files = scandir($Path);
     } catch (Exception $Error) {
-        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     try {
@@ -74,7 +74,7 @@ function TimeUUID_Sort(string $Path, string $Separator = null): array {
             }
         }
     } catch (Exception $Error) {
-        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     try {
@@ -83,7 +83,7 @@ function TimeUUID_Sort(string $Path, string $Separator = null): array {
         });
         $Response["Files"] = $Metas;
     } catch (Exception $Error) {
-        $Response["Ec"] = 50003; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50003; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     return $Response;
@@ -114,14 +114,14 @@ function TimeUUID_Decode(string $UUID, string $Separator = null): array {
             }
         }
     } catch (Exception $Error) {
-        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     try {
         $UUID = str_replace($Separator, "", $UUID);
         $Seed = [hexdec($UUID[-2]), hexdec($UUID[-1])];
     } catch (Exception $Error) {
-        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     try {
@@ -132,7 +132,7 @@ function TimeUUID_Decode(string $UUID, string $Separator = null): array {
         }
         $Response["Time"] = (int)$Time;
     } catch (Exception $Error) {
-        $Response["Ec"] = 50003; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50003; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     return $Response;

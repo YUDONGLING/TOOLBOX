@@ -99,7 +99,7 @@ def SafePath(Path: str, Options: dict = None) -> dict:
 
         Response['Result'] = re.sub(r'\s+', ' ', re.sub(r'[\\/:*?"<>|\r\n\t]', ' ', Path)).lstrip()[:Options.MaxLength].rstrip()
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     
     return Response
 
@@ -136,7 +136,7 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
         if Size < 0                          : raise ValueError('Size Must be Positive')
         if not Unit in Units                 : raise ValueError('Unit Must in B, KB, MB, GB, TB or PB')
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         SizeInBytes = Size * (1024 ** Weights[Unit])
@@ -147,7 +147,7 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
         AutoUnit = [_Unit for _Unit in Units[1:] if Sizes[_Unit] >= 1]
         AutoUnit = AutoUnit[-1] if AutoUnit else 'B'
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Result = Options.Format.replace('{{Size}}', f'{Sizes[AutoUnit]:.{Options.Place_After_Decimal_Point}f}').replace('{{Unit}}', AutoUnit)
@@ -159,6 +159,6 @@ def ConvertSize(Size: int, Unit: str = 'B', Options: dict = None) -> dict:
 
         Response['Result'] = Result
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
     
     return Response

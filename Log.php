@@ -32,7 +32,7 @@ function MakeLog(string $Content, string $Path = "Log/{{YYYY}}-{{MM}}-{{DD}}.txt
             mkdir(dirname($Path), 0777, true);
         }
     } catch (Exception $Error) {
-        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     try {
@@ -50,7 +50,7 @@ function MakeLog(string $Content, string $Path = "Log/{{YYYY}}-{{MM}}-{{DD}}.txt
         fclose($Fp);
         $Response["Path"] = $Path;
     } catch (Exception $Error) {
-        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     return $Response;
@@ -59,7 +59,7 @@ function MakeLog(string $Content, string $Path = "Log/{{YYYY}}-{{MM}}-{{DD}}.txt
 /**
  * Make Error Message, Include File, Line Number and Function Name, for Debugging.
  */
-function MakeErrorMessage(Throwable $Error): string {
+function MakeErrorMessage(Throwable $Error, mixed $Code = null): string {
     if ($Error->getFile() && $Error->getLine()) {
         $Modu = str_replace(getcwd() . DIRECTORY_SEPARATOR, "", $Error->getFile()) ?: "N/A";
         $Func = isset($Error->getTrace()[0]["function"]) ? "Function <" . $Error->getTrace()[0]["function"] . ">" : "N/A";
@@ -76,7 +76,31 @@ function MakeErrorMessage(Throwable $Error): string {
         $Type = "Error";
     }
 
-    return sprintf("File \"%s\", Line %s, in %s @%s: %s.", $Modu, $Line, $Func, $Type, ucwords(rtrim($Error->getMessage(), ".")));
+    $S_Message = rtrim($Error->getMessage(), ".");
+    $T_Message = mb_convert_case($S_Message, MB_CASE_TITLE, "UTF-8");
+
+    if (mb_strlen($S_Message, "UTF-8") === mb_strlen($T_Message, "UTF-8")) {
+        $Message = "";
+        $S_Chars = preg_split("//u", $S_Message, -1, PREG_SPLIT_NO_EMPTY);
+        $T_Chars = preg_split("//u", $T_Message, -1, PREG_SPLIT_NO_EMPTY);
+
+        if ($S_Chars !== false && $T_Chars !== false) {
+            foreach ($S_Chars as $Index => $S) {
+                $T = $T_Chars[$Index];
+
+                $Message .= (
+                    $S === mb_strtoupper($S, "UTF-8") &&
+                    $S !== mb_strtolower($S, "UTF-8")
+                ) ? $S : $T;
+            }
+        } else {
+            $Message = $T_Message;
+        }
+    } else {
+        $Message = $T_Message;
+    }
+
+    return sprintf("File \"%s\", Line %s, in %s %s@%s: %s.", $Modu, $Line, $Func, $Code ?? "", $Type, $Message);
 }
 
 ?>

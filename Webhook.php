@@ -58,7 +58,7 @@ function DingTalk(string $Token, string $Topic = "", array $Message = null): arr
 
         $MessageBody .= "<font color=#6A65FF>" . $Topic . "</font>";
     } catch (Exception $Error) {
-        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50001; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     try {
@@ -80,10 +80,10 @@ function DingTalk(string $Token, string $Topic = "", array $Message = null): arr
         ])), true);
 
         if (($Rsp["errcode"] ?? -1) !== 0) {
-            throw new Exception(($Rsp["errcode"] ?? "Unknown") . "-" . ($Rsp["errmsg"] ?? "Unknown"));
+            throw new Exception("<Interface [" . ($Rsp["errcode"] ?? "None") . "]> " . ($Rsp["errmsg"] ?? json_encode($Rsp, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)));
         }
     } catch (Exception $Error) {
-        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error); return $Response;
+        $Response["Ec"] = 50002; $Response["Em"] = MakeErrorMessage($Error, $Response["Ec"]); return $Response;
     }
 
     return $Response;

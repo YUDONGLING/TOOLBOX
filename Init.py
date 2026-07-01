@@ -3,7 +3,7 @@ global _ConfigCache; _ConfigCache = {}
 
 def __getattr__(Name: str):
     if Name not in ('ExeConfig', 'EnvironVar'):
-        raise AttributeError(f'Can\'t Get Attribute of \'{Name}\'')
+        raise AttributeError(f'Can Not Get Attribute of `{Name}`')
 
     if Name == 'ExeConfig':
         if 'ExeConfig' not in _ConfigCache: _ConfigCache['ExeConfig'] = ReadConfig()
@@ -18,7 +18,7 @@ def __setattr__(Name: str, Value):
     if Name in ('ExeConfig', 'EnvironVar'):
         _ConfigCache[Name] = Value
     else:
-        raise AttributeError(f'Can\'t Set Attribute of \'{Name}\'')
+        raise AttributeError(f'Can Not Set Attribute of `{Name}`')
 
 
 def __delattr__(Name: str):
@@ -26,7 +26,7 @@ def __delattr__(Name: str):
         if Name in _ConfigCache:
             del _ConfigCache[Name]
     else:
-        raise AttributeError(f'Can\'t Delete Attribute of \'{Name}\'')
+        raise AttributeError(f'Can Not Delete Attribute of `{Name}`')
 
 
 class DotAccessDict(dict):
@@ -58,7 +58,7 @@ class DotAccessDict(dict):
         try:
             del self[Name]
         except KeyError:
-            raise AttributeError(f'\'DotAccessDict\' Object Has No Attribute \'{Name}\'')
+            raise AttributeError(f'DotAccessDict Object Does Not Have Attribute of `{Name}`')
 
 
 def AsyncCall(Function: callable, *Args, **Kwargs) -> object:

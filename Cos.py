@@ -110,10 +110,10 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
 
     try:
         if Key is None and Url is None:
-            raise Exception('Either Key or Url Must be Given')
+            raise Exception('Missing Required Parameter: Key or Url')
 
         if Path is None and Data is None:
-            raise Exception('Either Path or Data Must be Given')
+            raise Exception('Missing Required Parameter: Path or Data')
 
         Options = _ValidateAndInitEndPoint(
             Options,
@@ -125,7 +125,7 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
 
         Header  = requests.structures.CaseInsensitiveDict(Header or {})
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     class _Reader(object):
         def __init__(self, File, Total):
@@ -214,7 +214,7 @@ def PutObject(Key: str = None, Url: str = None, Path: str = None, Data: str = No
 
             Response['Result'] = _ExtractResponse(Result['Result']).headers
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -277,7 +277,7 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
 
         Header  = requests.structures.CaseInsensitiveDict(Header or {})
     except Exception as Error:
-        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 40000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Bucket = __Bucket(
@@ -307,7 +307,7 @@ def MultiPartPutObject(Key: str, Path: str, Header: dict = None, ProgressCallbac
             progress_callback    = ProgressCallback
         ))
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 

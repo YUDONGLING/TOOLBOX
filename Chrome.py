@@ -37,7 +37,7 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
         ChromeOptions.add_experimental_option('useAutomationExtension', False)
         ChromeOptions.add_argument("--disable-blink-features=AutomationControlled")
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Response['Result'] = selenium.webdriver.Chrome(
@@ -45,7 +45,7 @@ def CreateBrowser(Private: bool = True, Options: dict = None) -> dict:
             options = ChromeOptions
         )
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -65,7 +65,7 @@ def CloseBrowser(Driver: object) -> dict:
     try:
         Driver.quit()
     except Exception as Error:
-        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50000; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 
@@ -94,7 +94,7 @@ def OpenUrl(Driver: object, Url: str, Options: dict = None) -> dict:
     try:
         Driver.get(Url)
     except Exception as Error:
-        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50001; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         if Options.ExpectedCondition:
@@ -105,13 +105,13 @@ def OpenUrl(Driver: object, Url: str, Options: dict = None) -> dict:
             import time
             time.sleep(Options.Timeout)
     except Exception as Error:
-        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50002; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     try:
         Response['Source'] = Driver.page_source
         Response['Cookie'] = Driver.get_cookies()
     except Exception as Error:
-        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error); return Response
+        Response['Ec'] = 50003; Response['Em'] = MakeErrorMessage(Error, Code = Response['Ec']); return Response
 
     return Response
 

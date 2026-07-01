@@ -67,8 +67,8 @@ class Scheduler(object):
 
         def Decorator(Function):
             with self._ThreadLock:
-                if Interval is None and Cron is None        : raise Exception('Either Interval or Cron Must Be Specified')
-                if Interval is not None and Cron is not None: raise Exception('Cannot Specify Both Interval and Cron')
+                if Interval is None and Cron is None        : raise Exception('Missing Required Parameter: Interval or Cron')
+                if Interval is not None and Cron is not None: raise Exception('Missing Required Parameter: Interval or Cron')
                 if Interval is not None and Interval <= 0   : raise Exception('Interval Must Be Greater Than 0')
 
                 if Cron is not None:

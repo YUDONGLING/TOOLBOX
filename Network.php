@@ -110,16 +110,10 @@ function QueryDns(string $Host, string $Type = 'A', ?bool $Global = null, ?array
                 'timeout' => $Options['Timeout']
             ]
         ]));
-        if ($Rsp === false) {
-            throw new Exception('HTTP DNS Query Failed');
-        }
-        $Rsp = json_decode($Rsp, true);
-        if (!is_array($Rsp)) {
-            throw new Exception('HTTP DNS Response Is Invalid');
-        }
 
+        $Rsp = json_decode($Rsp, true);
         if ($Rsp['Status'] != 0) {
-            throw new Exception("HTTP DNS Query Failed, Status is {$Rsp['Status']}, Response is " . json_encode($Rsp));
+            throw new Exception("<Interface [" . ($Rsp["Status"] ?? "None") . "]> " . json_encode($Rsp, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         } else {
             $Recode = array_column(array_filter($Rsp['Answer'], function($Item) use ($Type) {
                 return $Item['type'] == $Type;
