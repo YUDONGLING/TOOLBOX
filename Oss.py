@@ -548,7 +548,7 @@ def FormPutObject(Key: str, Path: str, Header: dict = None, MultipartField: dict
     try:
         with open(Path, 'rb') as File:
             Fields  = dict(MultipartField or {})
-            Fields.setdefault('key' , Key.removeprefix('/'))
+            Fields.setdefault('key' , (Key if Key is not None else '').removeprefix('/') or None)
             Fields.setdefault('file', (Path, File, _FormatContentType(Path = Path, Value = Header.get('Content-Type'))))
 
             Encoder = MultipartEncoder(fields = { Key: Value for Key, Value in Fields.items() if Value is not None })
