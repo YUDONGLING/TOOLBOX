@@ -11,6 +11,35 @@ def _AdaptCallback(ProgressCallback: callable) -> callable:
     return Callback
 
 
+def _SignAWSHeader(Header: dict, Endpoint: str, Method: str, Url: str, Signer: object, Body = b'', ContentType: str = None) -> object:
+    '''
+    Build AWS SigV4 Request Headers while Preserving User Supplied Non-Signature Headers.
+    '''
+    import requests
+
+    from botocore.awsrequest import AWSRequest
+
+    Result = requests.structures.CaseInsensitiveDict()
+    for Key, Value in dict(Header or {}).items():
+        LowerKey = Key.lower()
+        if LowerKey in ('host', 'authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
+            continue
+        Result[Key] = Value
+
+    Result['Host'] = Endpoint
+    if ContentType:
+        Result.setdefault('Content-Type', ContentType)
+
+    Request = AWSRequest(method = Method, url = Url, data = Body, headers = dict(Result))
+    Signer.add_auth(Request)
+
+    for Key, Value in Request.headers.items():
+        if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
+            Result[Key] = Value
+
+    return Result
+
+
 def __EndPoint(Product: str = None, Region: str = None, Options: dict = None) -> str:
     '''
     Volcengine OpenAPI EndPoint.
@@ -312,8 +341,6 @@ def DeleteObject(Key: str | list, Header: dict = None, Param: dict = None, Optio
 
 
 def ApplyImageUpload(Service: str, SignWith: str, Count: int = 1, Options: dict = None) -> dict:
-    import os
-    import sys
     import json
 
     from volcengine.imagex.v2.imagex_trait import service_info_map
@@ -395,9 +422,6 @@ def ApplyImageUpload(Service: str, SignWith: str, Count: int = 1, Options: dict 
 
 
 def __ApplyImageUpload_SDK(Options: dict) -> dict:
-    import os
-    import sys
-
     from volcengine.imagex.v2.imagex_service import ImagexService
 
     if not __package__:
@@ -430,13 +454,10 @@ def __ApplyImageUpload_SDK(Options: dict) -> dict:
 
 
 def __ApplyImageUpload_AWS(Options: dict) -> dict:
-    import os
-    import sys
     import requests
     import urllib.parse
 
     from botocore.auth import SigV4Auth
-    from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
 
     if not __package__:
@@ -462,21 +483,14 @@ def __ApplyImageUpload_AWS(Options: dict) -> dict:
                 QueryItems.append((Key, Value))
 
         Url    = 'https://%s/?%s' % (Options.Endpoint, urllib.parse.urlencode(QueryItems, doseq = True, quote_via = urllib.parse.quote, safe = '-_.~'))
-        Header = requests.structures.CaseInsensitiveDict()
-        for Key, Value in dict(Options.Header or {}).items():
-            LowerKey = Key.lower()
-            if LowerKey == 'host' or LowerKey == 'authorization' or LowerKey.startswith('x-amz-'):
-                continue
-            Header[Key] = Value
-        Header['Host'] = Options.Endpoint
-
-        Request = AWSRequest(method = 'GET', url = Url, data = b'', headers = {'Host': Options.Endpoint})
-        SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'imagex', Options.Region).add_auth(Request)
-
-        for Key, Value in Request.headers.items():
-            if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
-                Header[Key] = Value
-
+        Header = _SignAWSHeader(
+            Header   = Options.Header,
+            Endpoint = Options.Endpoint,
+            Method   = 'GET',
+            Url      = Url,
+            Body     = b'',
+            Signer   = SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'imagex', Options.Region)
+        )
         Result = requests.get(Url, headers = Header, cookies = Options.Cookie, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
         if not Result.ok:
             raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Result.status_code, Result.text or None))
@@ -489,8 +503,6 @@ def __ApplyImageUpload_AWS(Options: dict) -> dict:
 
 
 def CommitImageUpload(Service: str, SessionKey: str, SignWith: str, Options: dict = None) -> dict:
-    import os
-    import sys
     import json
 
     from volcengine.imagex.v2.imagex_trait import service_info_map
@@ -587,9 +599,6 @@ def CommitImageUpload(Service: str, SessionKey: str, SignWith: str, Options: dic
 
 
 def __CommitImageUpload_SDK(Options: dict) -> dict:
-    import os
-    import sys
-
     from volcengine.imagex.v2.imagex_service import ImagexService
 
     if not __package__:
@@ -628,7 +637,6 @@ def __CommitImageUpload_AWS(Options: dict) -> dict:
     import urllib.parse
 
     from botocore.auth import SigV4Auth
-    from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
 
     if not __package__:
@@ -654,22 +662,15 @@ def __CommitImageUpload_AWS(Options: dict) -> dict:
                 QueryItems.append((Key, Value))
 
         Url    = 'https://%s/?%s' % (Options.Endpoint, urllib.parse.urlencode(QueryItems, doseq = True, quote_via = urllib.parse.quote, safe = '-_.~'))
-        Header = requests.structures.CaseInsensitiveDict()
-        for Key, Value in dict(Options.Header or {}).items():
-            LowerKey = Key.lower()
-            if LowerKey == 'host' or LowerKey == 'authorization' or LowerKey.startswith('x-amz-'):
-                continue
-            Header[Key] = Value
-        Header['Host'] = Options.Endpoint
-        Header.setdefault('Content-Type', 'application/json')
-
-        Request = AWSRequest(method = 'POST', url = Url, data = Options.Body or b'', headers = {'Host': Options.Endpoint})
-        SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'imagex', Options.Region).add_auth(Request)
-
-        for Key, Value in Request.headers.items():
-            if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
-                Header[Key] = Value
-
+        Header = _SignAWSHeader(
+            Header      = Options.Header,
+            Endpoint    = Options.Endpoint,
+            Method      = 'POST',
+            Url         = Url,
+            Body        = Options.Body or b'',
+            ContentType = 'application/json',
+            Signer      = SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'imagex', Options.Region)
+        )
         Result = requests.post(Url, headers = Header, cookies = Options.Cookie, data = Options.Body, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
         if not Result.ok:
             raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Result.status_code, Result.text or None))
@@ -682,8 +683,6 @@ def __CommitImageUpload_AWS(Options: dict) -> dict:
 
 
 def ApplyUploadInner(SpaceName: str, SignWith: str, Type: str = 'media' or 'image' or 'object', Count: int = 1, Options: dict = None) -> dict:
-    import os
-    import sys
     import json
 
     if not __package__:
@@ -770,13 +769,10 @@ def __ApplyUploadInner_SDK(Options: dict) -> dict:
 
 
 def __ApplyUploadInner_AWS(Options: dict) -> dict:
-    import os
-    import sys
     import requests
     import urllib.parse
 
     from botocore.auth import SigV4Auth
-    from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
 
     if not __package__:
@@ -802,21 +798,14 @@ def __ApplyUploadInner_AWS(Options: dict) -> dict:
                 QueryItems.append((Key, Value))
 
         Url    = 'https://%s/?%s' % (Options.Endpoint, urllib.parse.urlencode(QueryItems, doseq = True, quote_via = urllib.parse.quote, safe = '-_.~'))
-        Header = requests.structures.CaseInsensitiveDict()
-        for Key, Value in dict(Options.Header or {}).items():
-            LowerKey = Key.lower()
-            if LowerKey == 'host' or LowerKey == 'authorization' or LowerKey.startswith('x-amz-'):
-                continue
-            Header[Key] = Value
-        Header['Host'] = Options.Endpoint
-
-        Request = AWSRequest(method = 'GET', url = Url, data = b'', headers = {'Host': Options.Endpoint})
-        SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'vod', Options.Region).add_auth(Request)
-
-        for Key, Value in Request.headers.items():
-            if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
-                Header[Key] = Value
-
+        Header = _SignAWSHeader(
+            Header   = Options.Header,
+            Endpoint = Options.Endpoint,
+            Method   = 'GET',
+            Url      = Url,
+            Body     = b'',
+            Signer     = SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'vod', Options.Region)
+        )
         Result = requests.get(Url, headers = Header, cookies = Options.Cookie, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
         if not Result.ok:
             raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Result.status_code, Result.text or None))
@@ -829,8 +818,6 @@ def __ApplyUploadInner_AWS(Options: dict) -> dict:
 
 
 def CommitUploadInner(SpaceName: str, SessionKey: str, SignWith: str, Options: dict = None) -> dict:
-    import os
-    import sys
     import json
 
     if not __package__:
@@ -915,13 +902,10 @@ def __CommitUploadInner_SDK(Options: dict) -> dict:
 
 
 def __CommitUploadInner_AWS(Options: dict) -> dict:
-    import os
-    import sys
     import requests
     import urllib.parse
 
     from botocore.auth import SigV4Auth
-    from botocore.awsrequest import AWSRequest
     from botocore.credentials import Credentials
 
     if not __package__:
@@ -947,22 +931,15 @@ def __CommitUploadInner_AWS(Options: dict) -> dict:
                 QueryItems.append((Key, Value))
 
         Url    = 'https://%s/?%s' % (Options.Endpoint, urllib.parse.urlencode(QueryItems, doseq = True, quote_via = urllib.parse.quote, safe = '-_.~'))
-        Header = requests.structures.CaseInsensitiveDict()
-        for Key, Value in dict(Options.Header or {}).items():
-            LowerKey = Key.lower()
-            if LowerKey == 'host' or LowerKey == 'authorization' or LowerKey.startswith('x-amz-'):
-                continue
-            Header[Key] = Value
-        Header['Host'] = Options.Endpoint
-        Header.setdefault('Content-Type', 'text/plain;charset=UTF-8')
-
-        Request = AWSRequest(method = 'POST', url = Url, data = Options.Body or b'', headers = {'Host': Options.Endpoint})
-        SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'vod', Options.Region).add_auth(Request)
-
-        for Key, Value in Request.headers.items():
-            if Key.lower() in ('authorization', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256'):
-                Header[Key] = Value
-
+        Header = _SignAWSHeader(
+            Header      = Options.Header,
+            Endpoint    = Options.Endpoint,
+            Method      = 'POST',
+            Url         = Url,
+            Body        = Options.Body or b'',
+            ContentType = 'text/plain;charset=UTF-8',
+            Signer        = SigV4Auth(Credentials(Options.AK, Options.SK, Options.STSToken), 'vod', Options.Region)
+        )
         Result = requests.post(Url, headers = Header, cookies = Options.Cookie, data = Options.Body, timeout = Options.Timeout, verify = Options.Verify, allow_redirects = Options.AllowRedirects)
         if not Result.ok:
             raise requests.exceptions.HTTPError('<Response [%s]> %s' % (Result.status_code, Result.text or None))
